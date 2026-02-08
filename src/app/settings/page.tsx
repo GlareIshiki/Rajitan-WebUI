@@ -3,6 +3,7 @@
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { useTheme, ThemeColor, themeConfigs } from "@/components/ThemeProvider";
 
 interface GuildSettings {
   id: string;
@@ -28,9 +29,19 @@ const CHARACTER_TYPES = [
   { id: "sarcastic", name: "サーカスティック", description: "皮肉の効いた辛口" },
 ];
 
+const THEME_OPTIONS: { id: ThemeColor; name: string; color: string }[] = [
+  { id: "purple", name: "パープル", color: "bg-purple-500" },
+  { id: "cyan", name: "シアン", color: "bg-cyan-500" },
+  { id: "pink", name: "ピンク", color: "bg-pink-500" },
+  { id: "green", name: "グリーン", color: "bg-green-500" },
+  { id: "amber", name: "アンバー", color: "bg-amber-500" },
+  { id: "rose", name: "ローズ", color: "bg-rose-500" },
+];
+
 export default function SettingsPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const { theme, setTheme } = useTheme();
   const [guilds, setGuilds] = useState<GuildSettings[]>([]);
   const [selectedGuild, setSelectedGuild] = useState<GuildSettings | null>(null);
   const [saving, setSaving] = useState(false);
@@ -87,24 +98,50 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="min-h-screen p-6">
+    <div className="min-h-screen bg-[#050508] text-white p-6">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold mb-8">設定</h1>
+        <h1 className="text-3xl font-bold mb-8 bg-gradient-to-r from-white via-purple-200 to-white bg-clip-text text-transparent">設定</h1>
+
+        {/* テーマ設定 */}
+        <div className="mb-8 bg-white/[0.03] backdrop-blur-xl rounded-2xl border border-white/10 p-6">
+          <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+            <span>🎨</span> カラーテーマ
+          </h2>
+          <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
+            {THEME_OPTIONS.map((t) => (
+              <button
+                key={t.id}
+                onClick={() => setTheme(t.id)}
+                className={`relative p-4 rounded-xl border transition-all ${
+                  theme === t.id
+                    ? "border-white/50 bg-white/10 scale-105"
+                    : "border-white/10 bg-white/[0.02] hover:bg-white/[0.05]"
+                }`}
+              >
+                <div className={`w-8 h-8 mx-auto rounded-full ${t.color} mb-2 shadow-lg`} />
+                <div className="text-xs text-center text-gray-300">{t.name}</div>
+                {theme === t.id && (
+                  <div className="absolute top-2 right-2 w-2 h-2 bg-white rounded-full" />
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
 
         <div className="grid lg:grid-cols-4 gap-6">
           {/* サーバー一覧 */}
           <div className="lg:col-span-1">
-            <div className="card p-4">
+            <div className="bg-white/[0.03] backdrop-blur-xl rounded-2xl border border-white/10 p-4">
               <h2 className="font-bold mb-4">サーバー一覧</h2>
               <div className="space-y-2">
                 {guilds.map((guild) => (
                   <button
                     key={guild.id}
                     onClick={() => setSelectedGuild(guild)}
-                    className={`w-full text-left p-3 rounded-lg transition-colors ${
+                    className={`w-full text-left p-3 rounded-lg transition-all ${
                       selectedGuild?.id === guild.id
-                        ? "bg-[#5865f2] text-white"
-                        : "bg-[#2a2a2a] hover:bg-[#3a3a3a]"
+                        ? "bg-[var(--theme-primary)] text-white"
+                        : "bg-white/5 hover:bg-white/10"
                     }`}
                   >
                     {guild.name}
@@ -119,7 +156,7 @@ export default function SettingsPage() {
             {selectedGuild && (
               <>
                 {/* 自動機能設定 */}
-                <div className="card p-6">
+                <div className="bg-white/[0.03] backdrop-blur-xl rounded-2xl border border-white/10 p-6">
                   <h2 className="text-xl font-bold mb-4">自動機能</h2>
                   <div className="space-y-4">
                     <ToggleSetting
@@ -159,7 +196,7 @@ export default function SettingsPage() {
                 </div>
 
                 {/* キャラクター設定 */}
-                <div className="card p-6">
+                <div className="bg-white/[0.03] backdrop-blur-xl rounded-2xl border border-white/10 p-6">
                   <h2 className="text-xl font-bold mb-4">キャラクター</h2>
                   <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
                     {CHARACTER_TYPES.map((char) => (
@@ -168,10 +205,10 @@ export default function SettingsPage() {
                         onClick={() =>
                           setSelectedGuild({ ...selectedGuild, character: char.id })
                         }
-                        className={`p-4 rounded-lg text-left transition-all ${
+                        className={`p-4 rounded-xl text-left transition-all ${
                           selectedGuild.character === char.id
-                            ? "bg-[#5865f2] ring-2 ring-[#5865f2]"
-                            : "bg-[#2a2a2a] hover:bg-[#3a3a3a]"
+                            ? "bg-[var(--theme-primary)] ring-2 ring-[var(--theme-primary)]"
+                            : "bg-white/5 hover:bg-white/10"
                         }`}
                       >
                         <div className="font-medium">{char.name}</div>
@@ -184,7 +221,7 @@ export default function SettingsPage() {
                 </div>
 
                 {/* タイミング設定 */}
-                <div className="card p-6">
+                <div className="bg-white/[0.03] backdrop-blur-xl rounded-2xl border border-white/10 p-6">
                   <h2 className="text-xl font-bold mb-4">タイミング設定</h2>
                   <div className="grid sm:grid-cols-2 gap-6">
                     <div>
@@ -200,7 +237,7 @@ export default function SettingsPage() {
                             summaryInterval: parseInt(e.target.value) || 30,
                           })
                         }
-                        className="w-full bg-[#2a2a2a] border border-[#3a3a3a] rounded-lg px-4 py-2 focus:ring-2 focus:ring-[#5865f2] focus:border-transparent"
+                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent transition-all"
                       />
                     </div>
                     <div>
@@ -216,7 +253,7 @@ export default function SettingsPage() {
                             quizInterval: parseInt(e.target.value) || 45,
                           })
                         }
-                        className="w-full bg-[#2a2a2a] border border-[#3a3a3a] rounded-lg px-4 py-2 focus:ring-2 focus:ring-[#5865f2] focus:border-transparent"
+                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent transition-all"
                       />
                     </div>
                   </div>
@@ -227,7 +264,7 @@ export default function SettingsPage() {
                   <button
                     onClick={handleSave}
                     disabled={saving}
-                    className="btn-primary px-8 py-3 disabled:opacity-50"
+                    className="px-8 py-3 bg-[var(--theme-primary)] hover:opacity-90 rounded-xl font-bold transition-all disabled:opacity-50"
                   >
                     {saving ? "保存中..." : "設定を保存"}
                   </button>
@@ -253,7 +290,7 @@ function ToggleSetting({
   onChange: (checked: boolean) => void;
 }) {
   return (
-    <div className="flex items-center justify-between p-4 bg-[#2a2a2a] rounded-lg">
+    <div className="flex items-center justify-between p-4 bg-white/5 rounded-xl">
       <div>
         <div className="font-medium">{label}</div>
         <div className="text-sm text-gray-400">{description}</div>
@@ -261,7 +298,7 @@ function ToggleSetting({
       <button
         onClick={() => onChange(!checked)}
         className={`relative w-12 h-6 rounded-full transition-colors ${
-          checked ? "bg-[#5865f2]" : "bg-[#4a4a4a]"
+          checked ? "bg-[var(--theme-primary)]" : "bg-white/20"
         }`}
       >
         <span
