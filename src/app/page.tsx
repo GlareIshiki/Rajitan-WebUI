@@ -307,18 +307,18 @@ function FeatureRow({
 }) {
   return (
     <div className={`flex flex-col ${reverse ? 'lg:flex-row-reverse' : 'lg:flex-row'} items-center gap-12`}>
-      {/* モック */}
-      <ScrollReveal direction={reverse ? "right" : "left"} delay={0}>
-        <div className="flex-1 flex justify-center">
-          <DiscordMock content={mockMessage.content} />
+      {/* テキスト（モバイルでは先に表示） */}
+      <ScrollReveal direction={reverse ? "left" : "right"} delay={0}>
+        <div className="flex-1 text-center lg:text-left order-1 lg:order-none">
+          <h3 className="text-2xl sm:text-3xl font-bold text-white mb-4">{title}</h3>
+          <p className="text-xl text-gray-400">{description}</p>
         </div>
       </ScrollReveal>
 
-      {/* テキスト */}
-      <ScrollReveal direction={reverse ? "left" : "right"} delay={200}>
-        <div className="flex-1 text-center lg:text-left">
-          <h3 className="text-2xl sm:text-3xl font-bold text-white mb-4">{title}</h3>
-          <p className="text-xl text-gray-400">{description}</p>
+      {/* モック（モバイルでは後に表示） */}
+      <ScrollReveal direction={reverse ? "right" : "left"} delay={200}>
+        <div className="flex-1 flex justify-center order-2 lg:order-none">
+          <DiscordMock content={mockMessage.content} />
         </div>
       </ScrollReveal>
     </div>
