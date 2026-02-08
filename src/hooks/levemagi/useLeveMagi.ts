@@ -95,6 +95,15 @@ export function useLeveMagi() {
     [setState]
   );
 
+  // 未完了Worklogを閉じるヘルパー
+  const closeOpenWorklogs = (worklogs: Worklog[], nutsId: string, now: string, nutsStatus: NutsStatus, phaseLabel: string, currentLevel: number): Worklog[] => {
+    return worklogs.map((w) =>
+      w.nutsId === nutsId && !w.completedAt
+        ? { ...w, completedAt: now, statusSnapshot: nutsStatus, phaseSnapshot: phaseLabel, levelSnapshot: currentLevel }
+        : w
+    );
+  };
+
   // 作業開始（ステータス変更 + Worklog生成）
   const startWork = useCallback(
     (nutsId: string, newStatus?: NutsStatus) => {
@@ -104,14 +113,20 @@ export function useLeveMagi() {
 
         const phase = detectPhase(nuts.startDate, nuts.deadline, nuts.status);
         const now = new Date();
+        const nowISO = now.toISOString();
+        const currentLevel = calculateLevel(calculateTotalXP(prev.leaves));
+
+        // 前回の未完了Worklogを自動クローズ
+        const updatedWorklogs = closeOpenWorklogs(prev.worklogs, nutsId, nowISO, nuts.status, phase.label, currentLevel);
+
         const worklog: Worklog = {
           id: generateId(),
           nutsId,
           name: `${nuts.name}の作業記録：${now.toLocaleDateString("ja-JP")} ${now.toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit" })}`,
-          startedAt: now.toISOString(),
+          startedAt: nowISO,
           statusSnapshot: nuts.status,
           phaseSnapshot: phase.label,
-          levelSnapshot: calculateLevel(calculateTotalXP(prev.leaves)),
+          levelSnapshot: currentLevel,
           deadlineSnapshot: nuts.deadline,
         };
 
@@ -122,11 +137,37 @@ export function useLeveMagi() {
               ? {
                   ...n,
                   status: newStatus || "本作業中",
-                  startDate: n.startDate || now.toISOString(),
+                  startDate: n.startDate || nowISO,
                 }
               : n
           ),
-          worklogs: [...prev.worklogs, worklog],
+          worklogs: [...updatedWorklogs, worklog],
+        };
+      });
+    },
+    [setState]
+  );
+
+  // 成果物を完了にする
+  const completeNuts = useCallback(
+    (nutsId: string) => {
+      setState((prev) => {
+        const nuts = prev.nuts.find((n) => n.id === nutsId);
+        if (!nuts) return prev;
+
+        const nowISO = new Date().toISOString();
+        const phase = detectPhase(nuts.startDate, nuts.deadline, nuts.status);
+        const currentLevel = calculateLevel(calculateTotalXP(prev.leaves));
+
+        // 未完了Worklogをクローズ
+        const updatedWorklogs = closeOpenWorklogs(prev.worklogs, nutsId, nowISO, "完了", phase.label, currentLevel);
+
+        return {
+          ...prev,
+          nuts: prev.nuts.map((n) =>
+            n.id === nutsId ? { ...n, status: "完了" as NutsStatus } : n
+          ),
+          worklogs: updatedWorklogs,
         };
       });
     },
@@ -431,6 +472,7 @@ export function useLeveMagi() {
     updateNuts,
     deleteNuts,
     startWork,
+    completeNuts,
     // Trunk
     addTrunk,
     updateTrunk,

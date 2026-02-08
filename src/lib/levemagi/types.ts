@@ -52,6 +52,8 @@ export interface Trunk {
   what: string;
   idea: string;
   conclusion: string;
+  detail?: string;
+  comment?: string;
   tags: string[];
   createdAt: string;
 }
@@ -81,9 +83,11 @@ export interface Root {
   title: string;
   type: RootType;
   value?: number;
+  difficulty?: 1 | 2 | 3;
   tags: string[];
   what: string;
   content: string;
+  comment?: string;
   url?: string;
   createdAt: string;
 }

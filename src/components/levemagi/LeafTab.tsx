@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import type { Leaf, Nuts, DifficultyId } from "@/lib/levemagi/types";
+import type { Leaf, Nuts, Trunk, DifficultyId } from "@/lib/levemagi/types";
 import { getLeafStatus } from "@/lib/levemagi/types";
 import {
   DIFFICULTY_MASTER,
@@ -14,6 +14,7 @@ import { EmptyState } from "./ui/EmptyState";
 interface LeafTabProps {
   leaves: Leaf[];
   nuts: Nuts[];
+  trunks: Trunk[];
   onAdd: (data: Omit<Leaf, "id" | "createdAt">) => void;
   onStart: (id: string) => void;
   onComplete: (id: string, createSeed: boolean) => void;
@@ -32,17 +33,21 @@ const PRIO_BADGE: Record<string, string> = {
   low: "bg-blue-500/20 text-blue-400",
 };
 
-export function LeafTab({ leaves, nuts, onAdd, onStart, onComplete, onDelete }: LeafTabProps) {
+export function LeafTab({ leaves, nuts, trunks, onAdd, onStart, onComplete, onDelete }: LeafTabProps) {
   const [title, setTitle] = useState("");
-  const [difficulty, setDifficulty] = useState<DifficultyId>("normal");
+  const [difficulty, setDifficulty] = useState<DifficultyId>("easy");
   const [priority, setPriority] = useState<"high" | "medium" | "low">("medium");
   const [nutsId, setNutsId] = useState("");
+  const [trunkId, setTrunkId] = useState("");
+
+  // 選択中のNutsに紐づくTrunkのみ表示
+  const availableTrunks = nutsId ? trunks.filter((t) => t.nutsId === nutsId) : [];
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim()) return;
-    onAdd({ title: title.trim(), difficulty, priority, nutsId: nutsId || undefined });
-    setTitle("");
+    if (!title.trim() || !nutsId) return;
+    onAdd({ title: title.trim(), difficulty, priority, nutsId, trunkId: trunkId || undefined });
+    setTitle(""); setTrunkId("");
   };
 
   // ステータスごとにグループ化
@@ -62,9 +67,25 @@ export function LeafTab({ leaves, nuts, onAdd, onStart, onComplete, onDelete }: 
         <div className="flex gap-3">
           <input type="text" value={title} onChange={(e) => setTitle(e.target.value)}
             placeholder="タスクを追加（動詞で始める）" className="flex-1" />
-          <button type="submit" className="btn-primary">追加</button>
+          <button type="submit" className="btn-primary" disabled={!nutsId}>追加</button>
         </div>
         <div className="flex gap-4 flex-wrap items-center">
+          <label className="flex items-center gap-2 text-sm text-muted">
+            成果物<span className="text-red-400">*</span>:
+            <select value={nutsId} onChange={(e) => { setNutsId(e.target.value); setTrunkId(""); }} className="text-sm">
+              <option value="">選択してください</option>
+              {nuts.map((n) => <option key={n.id} value={n.id}>{n.name}</option>)}
+            </select>
+          </label>
+          {availableTrunks.length > 0 && (
+            <label className="flex items-center gap-2 text-sm text-muted">
+              イシュー:
+              <select value={trunkId} onChange={(e) => setTrunkId(e.target.value)} className="text-sm">
+                <option value="">なし</option>
+                {availableTrunks.map((t) => <option key={t.id} value={t.id}>{t.title}</option>)}
+              </select>
+            </label>
+          )}
           <label className="flex items-center gap-2 text-sm text-muted">
             難易度:
             <select value={difficulty} onChange={(e) => setDifficulty(e.target.value as DifficultyId)} className="text-sm">
@@ -79,16 +100,8 @@ export function LeafTab({ leaves, nuts, onAdd, onStart, onComplete, onDelete }: 
               {(["high", "medium", "low"] as const).map((p) => <option key={p} value={p}>{PRIORITY_LABELS[p]}</option>)}
             </select>
           </label>
-          {nuts.length > 0 && (
-            <label className="flex items-center gap-2 text-sm text-muted">
-              成果物:
-              <select value={nutsId} onChange={(e) => setNutsId(e.target.value)} className="text-sm">
-                <option value="">なし</option>
-                {nuts.map((n) => <option key={n.id} value={n.id}>{n.name}</option>)}
-              </select>
-            </label>
-          )}
         </div>
+        {!nutsId && <p className="text-xs text-muted">※ 成果物の選択は必須です</p>}
       </form>
 
       {leaves.length === 0 ? (

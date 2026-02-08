@@ -29,8 +29,8 @@ function StarRating({ rating }: { rating?: number }) {
   if (!rating) return null;
   return (
     <div className="flex gap-0.5">
-      {[1, 2, 3, 4, 5].map((i) => (
-        <span key={i} className={`text-sm ${i <= rating ? "text-yellow-400" : "text-gray-600"}`}>★</span>
+      {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((i) => (
+        <span key={i} className={`text-xs ${i <= rating ? "text-yellow-400" : "text-gray-600"}`}>★</span>
       ))}
     </div>
   );
@@ -94,9 +94,9 @@ export function PortalTab({ portals, nuts, leaves, roots, trunks, resources, onA
             </label>
             <label className="flex items-center gap-2 text-sm text-muted">評価:
               <div className="flex gap-0.5">
-                {[1, 2, 3, 4, 5].map((i) => (
+                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((i) => (
                   <button key={i} type="button" onClick={() => setRating(i === rating ? 0 : i)}
-                    className={`text-lg transition-colors ${i <= rating ? "text-yellow-400" : "text-gray-600 hover:text-yellow-300"}`}>★</button>
+                    className={`text-base transition-colors ${i <= rating ? "text-yellow-400" : "text-gray-600 hover:text-yellow-300"}`}>★</button>
                 ))}
               </div>
             </label>
@@ -144,7 +144,7 @@ function PortalCard({ portal, nuts, leaves, roots, trunks, resources, isExpanded
       nuts: nuts.filter((n) => hasTag(n.tags)),
       leaves: leaves.filter((l) => { const n = nuts.find((nu) => nu.id === l.nutsId); return n && hasTag(n.tags); }),
       roots: roots.filter((r) => hasTag(r.tags)),
-      trunks: trunks.filter((t) => hasTag(t.tags)),
+      trunks: trunks.filter((t) => { const n = nuts.find((nu) => nu.id === t.nutsId); return n && hasTag(n.tags); }),
       resources: resources.filter((r) => hasTag(r.tags)),
     };
   }, [portalTags, nuts, leaves, roots, trunks, resources]);

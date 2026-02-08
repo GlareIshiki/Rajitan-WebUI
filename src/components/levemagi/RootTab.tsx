@@ -44,6 +44,8 @@ export function RootTab({ roots, nuts, onAdd, onUpdate, onDelete }: RootTabProps
   const [what, setWhat] = useState("");
   const [content, setContent] = useState("");
   const [nutsId, setNutsId] = useState("");
+  const [rootDifficulty, setRootDifficulty] = useState<1 | 2 | 3 | 0>(0);
+  const [comment, setComment] = useState("");
   const [filter, setFilter] = useState<Root["type"] | "all">("all");
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -55,9 +57,11 @@ export function RootTab({ roots, nuts, onAdd, onUpdate, onDelete }: RootTabProps
       what: what.trim(),
       content: content.trim(),
       nutsId: nutsId || undefined,
+      difficulty: rootDifficulty ? (rootDifficulty as 1 | 2 | 3) : undefined,
+      comment: comment.trim() || undefined,
       tags: [],
     });
-    setTitle(""); setType("knowledge"); setWhat(""); setContent(""); setNutsId(""); setIsAdding(false);
+    setTitle(""); setType("knowledge"); setWhat(""); setContent(""); setNutsId(""); setRootDifficulty(0); setComment(""); setIsAdding(false);
   };
 
   const filteredRoots = roots.filter((r) => filter === "all" || r.type === filter);
@@ -112,8 +116,18 @@ export function RootTab({ roots, nuts, onAdd, onUpdate, onDelete }: RootTabProps
               </div>
             )}
           </div>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted">難易度:</span>
+            <select value={rootDifficulty} onChange={(e) => setRootDifficulty(Number(e.target.value) as 0 | 1 | 2 | 3)} className="text-sm">
+              <option value={0}>未設定</option>
+              <option value={1}>★ 簡単</option>
+              <option value={2}>★★ 普通</option>
+              <option value={3}>★★★ 難しい</option>
+            </select>
+          </div>
           <input type="text" value={what} onChange={(e) => setWhat(e.target.value)} placeholder="何についての知見か（任意）" className="w-full" />
           <textarea value={content} onChange={(e) => setContent(e.target.value)} placeholder="詳細な内容" className="w-full h-32 resize-none" />
+          <textarea value={comment} onChange={(e) => setComment(e.target.value)} placeholder="コメント（任意）" className="w-full h-16 resize-none" />
           <div className="flex gap-2 justify-end">
             <button type="button" onClick={() => setIsAdding(false)} className="btn-secondary">キャンセル</button>
             <button type="submit" className="btn-primary">追加</button>
@@ -152,10 +166,13 @@ function RootItem({ root, nuts, onUpdate, onDelete }: {
           <span className="text-2xl">{TYPE_ICON[root.type]}</span>
           <div className="flex-1 min-w-0">
             <div className="font-bold text-primary">{root.title}</div>
-            <div className="text-sm text-muted flex items-center gap-2">
+            <div className="text-sm text-muted flex items-center gap-2 flex-wrap">
               <span className={`px-2 py-0.5 rounded-full text-xs border ${TYPE_BADGE[root.type]}`}>
                 {ROOT_TYPE_LABELS[root.type]}
               </span>
+              {root.difficulty && (
+                <span className="px-2 py-0.5 rounded-full text-xs bg-panel text-yellow-400">{"★".repeat(root.difficulty)}</span>
+              )}
               {nuts && <><span>•</span><span>🌰 {nuts.name}</span></>}
             </div>
           </div>
@@ -184,6 +201,13 @@ function RootItem({ root, nuts, onUpdate, onDelete }: {
             <div className="whitespace-pre-wrap text-primary mb-4">{root.content}</div>
           ) : (
             <p className="text-muted italic mb-4">内容がありません</p>
+          )}
+
+          {root.comment && (
+            <div className="mb-4 p-3 bg-panel rounded-lg">
+              <div className="text-xs text-muted mb-1">💬 コメント</div>
+              <div className="text-sm text-primary whitespace-pre-wrap">{root.comment}</div>
+            </div>
           )}
 
           {/* シード昇格 — 進化パス表示 */}

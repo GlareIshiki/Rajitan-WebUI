@@ -39,6 +39,7 @@ export default function LeveMagiPage() {
     updateNuts,
     deleteNuts,
     startWork,
+    completeNuts,
     addTrunk,
     updateTrunk,
     deleteTrunk,
@@ -140,12 +141,17 @@ export default function LeveMagiPage() {
               nuts={state.nuts}
               leaves={state.leaves}
               trunks={state.trunks}
+              roots={state.roots}
               worklogs={state.worklogs}
               tags={state.tags}
               onAdd={addNuts}
               onUpdate={updateNuts}
               onDelete={deleteNuts}
               onStartWork={startWork}
+              onCompleteNuts={completeNuts}
+              onAddLeaf={addLeaf}
+              onAddTrunk={addTrunk}
+              onAddRoot={addRoot}
             />
           )}
 
@@ -153,6 +159,7 @@ export default function LeveMagiPage() {
             <LeafTab
               leaves={state.leaves}
               nuts={state.nuts}
+              trunks={state.trunks}
               onAdd={addLeaf}
               onStart={startLeaf}
               onComplete={handleCompleteLeaf}
@@ -164,9 +171,11 @@ export default function LeveMagiPage() {
             <TrunkTab
               trunks={state.trunks}
               nuts={state.nuts}
+              leaves={state.leaves}
               onAdd={addTrunk}
               onUpdate={updateTrunk}
               onDelete={deleteTrunk}
+              onAddLeaf={addLeaf}
             />
           )}
 

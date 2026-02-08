@@ -1,16 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import type { Trunk, Nuts } from "@/lib/levemagi/types";
+import type { Trunk, Nuts, Leaf } from "@/lib/levemagi/types";
+import { getLeafStatus } from "@/lib/levemagi/types";
 import { TRUNK_TYPE_LABELS } from "@/lib/levemagi/constants";
 import { EmptyState } from "./ui/EmptyState";
 
 interface TrunkTabProps {
   trunks: Trunk[];
   nuts: Nuts[];
+  leaves: Leaf[];
   onAdd: (data: Omit<Trunk, "id" | "createdAt">) => void;
   onUpdate: (id: string, data: Partial<Omit<Trunk, "id" | "createdAt">>) => void;
   onDelete: (id: string) => void;
+  onAddLeaf: (data: Omit<Leaf, "id" | "createdAt">) => void;
 }
 
 const STATUS_BADGE: Record<Trunk["status"], string> = {
@@ -36,7 +39,7 @@ const VALUE_BADGE: Record<number, string> = {
   3: "bg-red-500/20 text-red-400",
 };
 
-export function TrunkTab({ trunks, nuts, onAdd, onUpdate, onDelete }: TrunkTabProps) {
+export function TrunkTab({ trunks, nuts, leaves, onAdd, onUpdate, onDelete, onAddLeaf }: TrunkTabProps) {
   const [showForm, setShowForm] = useState(false);
   const [title, setTitle] = useState("");
   const [nutsId, setNutsId] = useState("");
@@ -120,23 +123,29 @@ export function TrunkTab({ trunks, nuts, onAdd, onUpdate, onDelete }: TrunkTabPr
         {sorted.length === 0 ? (
           <EmptyState icon="🪵" title="イシューがありません" description="課題やアイデアを記録しましょう" action={{ label: "+ 追加", onClick: () => setShowForm(true) }} />
         ) : sorted.map((trunk) => (
-          <TrunkItem key={trunk.id} trunk={trunk} linkedNuts={nuts.find((n) => n.id === trunk.nutsId)} onUpdate={onUpdate} onDelete={onDelete} />
+          <TrunkItem key={trunk.id} trunk={trunk} linkedNuts={nuts.find((n) => n.id === trunk.nutsId)}
+            childLeaves={leaves.filter((l) => l.trunkId === trunk.id)}
+            onUpdate={onUpdate} onDelete={onDelete} onAddLeaf={onAddLeaf} />
         ))}
       </div>
     </div>
   );
 }
 
-function TrunkItem({ trunk, linkedNuts, onUpdate, onDelete }: {
+function TrunkItem({ trunk, linkedNuts, childLeaves, onUpdate, onDelete, onAddLeaf }: {
   trunk: Trunk;
   linkedNuts?: Nuts;
+  childLeaves: Leaf[];
   onUpdate: (id: string, data: Partial<Omit<Trunk, "id" | "createdAt">>) => void;
   onDelete: (id: string) => void;
+  onAddLeaf: (data: Omit<Leaf, "id" | "createdAt">) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
   const [what, setWhat] = useState(trunk.what);
   const [idea, setIdea] = useState(trunk.idea);
   const [conclusion, setConclusion] = useState(trunk.conclusion);
+  const [addingLeaf, setAddingLeaf] = useState(false);
+  const [leafTitle, setLeafTitle] = useState("");
 
   const handleSave = () => {
     onUpdate(trunk.id, { what, idea, conclusion });
@@ -153,7 +162,12 @@ function TrunkItem({ trunk, linkedNuts, onUpdate, onDelete }: {
               <span className={`px-2 py-0.5 rounded-full text-xs ${VALUE_BADGE[trunk.value]}`}>重要度 {trunk.value}</span>
               <span className="px-2 py-0.5 rounded-full text-xs bg-panel text-muted">{TRUNK_TYPE_LABELS[trunk.type]}</span>
             </div>
-            {linkedNuts && <div className="text-xs text-muted mt-1">🌰 {linkedNuts.name}</div>}
+            <div className="flex items-center gap-2 mt-1 flex-wrap">
+              {linkedNuts && <span className="text-xs text-muted">🌰 {linkedNuts.name}</span>}
+              {childLeaves.length > 0 && (
+                <span className="text-xs text-muted">🍃 {childLeaves.filter((l) => l.completedAt).length}/{childLeaves.length}</span>
+              )}
+            </div>
             {/* What概要（カードフェイス） */}
             {trunk.what && !expanded && (
               <p className="text-sm text-muted mt-1 truncate">{trunk.what}</p>
@@ -198,6 +212,50 @@ function TrunkItem({ trunk, linkedNuts, onUpdate, onDelete }: {
             </div>
 
             <button onClick={handleSave} className="btn-primary text-sm">保存</button>
+
+            {/* 子タスク一覧 */}
+            <div className="bg-panel rounded-lg p-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted">🍃 タスク ({childLeaves.length})</span>
+              </div>
+              {childLeaves.length > 0 && (
+                <div className="space-y-1">
+                  {childLeaves.map((l) => {
+                    const st = getLeafStatus(l);
+                    return (
+                      <div key={l.id} className="flex items-center gap-2 text-xs">
+                        <span className={`w-1.5 h-1.5 rounded-full ${st === "completed" ? "bg-green-400" : st === "in_progress" ? "bg-accent" : "bg-gray-500"}`} />
+                        <span className={`truncate ${st === "completed" ? "line-through text-muted" : "text-primary"}`}>{l.title}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+              {!addingLeaf ? (
+                <button onClick={() => setAddingLeaf(true)} className="px-2 py-1 rounded text-xs bg-card border border-panel hover:border-accent transition-colors">+ タスク追加</button>
+              ) : (
+                <div className="flex gap-2 animate-slide-in">
+                  <input type="text" value={leafTitle} onChange={(e) => setLeafTitle(e.target.value)} placeholder="タスク名" className="flex-1 text-sm" autoFocus
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        if (leafTitle.trim()) {
+                          onAddLeaf({ title: leafTitle.trim(), nutsId: trunk.nutsId, trunkId: trunk.id, difficulty: "easy", priority: "medium" });
+                          setLeafTitle(""); setAddingLeaf(false);
+                        }
+                      }
+                      if (e.key === "Escape") { setAddingLeaf(false); setLeafTitle(""); }
+                    }} />
+                  <button onClick={() => {
+                    if (leafTitle.trim()) {
+                      onAddLeaf({ title: leafTitle.trim(), nutsId: trunk.nutsId, trunkId: trunk.id, difficulty: "easy", priority: "medium" });
+                      setLeafTitle(""); setAddingLeaf(false);
+                    }
+                  }} className="btn-primary text-xs">追加</button>
+                  <button onClick={() => { setAddingLeaf(false); setLeafTitle(""); }} className="text-xs text-muted hover:text-primary">✕</button>
+                </div>
+              )}
+            </div>
 
             {trunk.tags.length > 0 && (
               <div className="flex gap-1 flex-wrap">

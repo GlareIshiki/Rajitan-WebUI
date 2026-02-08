@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import type { Nuts, Leaf, Trunk, Worklog, Tag, NutsStatus } from "@/lib/levemagi/types";
+import type { Nuts, Leaf, Trunk, Root, Worklog, Tag, NutsStatus } from "@/lib/levemagi/types";
+import { getLeafStatus } from "@/lib/levemagi/types";
 import {
   STATUS_PROGRESS_MAP,
   getNutsStatusCategory,
@@ -22,12 +23,17 @@ interface NutsTabProps {
   nuts: Nuts[];
   leaves: Leaf[];
   trunks: Trunk[];
+  roots: Root[];
   worklogs: Worklog[];
   tags: Tag[];
   onAdd: (data: Omit<Nuts, "id" | "createdAt">) => void;
   onUpdate: (id: string, data: Partial<Omit<Nuts, "id" | "createdAt">>) => void;
   onDelete: (id: string) => void;
   onStartWork: (nutsId: string) => void;
+  onCompleteNuts: (nutsId: string) => void;
+  onAddLeaf: (data: Omit<Leaf, "id" | "createdAt">) => void;
+  onAddTrunk: (data: Omit<Trunk, "id" | "createdAt">) => void;
+  onAddRoot: (data: Omit<Root, "id" | "createdAt">) => void;
 }
 
 const PRIO_BORDER: Record<string, string> = {
@@ -42,7 +48,9 @@ const PRIO_BADGE: Record<string, string> = {
   low: "bg-blue-500/20 text-blue-400",
 };
 
-export function NutsTab({ nuts, leaves, trunks, worklogs, tags, onAdd, onUpdate, onDelete, onStartWork }: NutsTabProps) {
+const VERSION_OPTIONS = ["未完", "v1.0", "v2.0"] as const;
+
+export function NutsTab({ nuts, leaves, trunks, roots, worklogs, tags, onAdd, onUpdate, onDelete, onStartWork, onCompleteNuts, onAddLeaf, onAddTrunk, onAddRoot }: NutsTabProps) {
   const [showForm, setShowForm] = useState(false);
   const [name, setName] = useState("");
   const [desc, setDesc] = useState("");
@@ -117,6 +125,8 @@ export function NutsTab({ nuts, leaves, trunks, worklogs, tags, onAdd, onUpdate,
           <EmptyState icon="🌰" title="成果物がありません" description="プロジェクトや制作物を追加しましょう" action={{ label: "+ 追加", onClick: () => setShowForm(true) }} />
         ) : sorted.map((n) => {
           const nutsLeaves = leaves.filter((l) => l.nutsId === n.id);
+          const nutsTrunks = trunks.filter((t) => t.nutsId === n.id);
+          const nutsRoots = roots.filter((r) => r.nutsId === n.id);
           const completedCount = nutsLeaves.filter((l) => l.completedAt).length;
           const phase = detectPhase(n.startDate, n.deadline, n.status);
           const eisenhower = classifyEisenhower(n.priority, phase.id);
@@ -139,7 +149,6 @@ export function NutsTab({ nuts, leaves, trunks, worklogs, tags, onAdd, onUpdate,
               <div className="p-4">
                 {/* カードフェイス */}
                 <div className="flex items-start gap-3 cursor-pointer" onClick={() => setExpanded(isExpanded ? null : n.id)}>
-                  {/* アイコン + プログレスリング */}
                   <div className="flex-shrink-0">
                     <ProgressRing percentage={progress} size={56} strokeWidth={3}>
                       <span className="text-xl">{displayIcon}</span>
@@ -147,21 +156,21 @@ export function NutsTab({ nuts, leaves, trunks, worklogs, tags, onAdd, onUpdate,
                   </div>
 
                   <div className="flex-1 min-w-0">
-                    {/* タイトル行 */}
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="font-bold text-primary text-lg">{n.name}</span>
                       <span className={`px-2 py-0.5 rounded-full text-xs ${cat === "in_progress" ? "bg-accent/20 text-accent" : cat === "complete" ? "bg-green-500/20 text-green-400" : "bg-gray-500/20 text-muted"}`}>{n.status}</span>
+                      {n.version && <span className="px-2 py-0.5 rounded-full text-xs bg-panel text-muted">{n.version}</span>}
                     </div>
 
-                    {/* メタ情報行 */}
                     <div className="flex items-center gap-2 mt-1 flex-wrap">
                       <span className={`px-2 py-0.5 rounded-full text-xs ${PRIO_BADGE[n.priority]}`}>{PRIORITY_LABELS[n.priority]}</span>
                       {phase.id !== "no_dates" && <span className="text-xs">{phase.emoji} {phase.label}</span>}
                       {cat === "in_progress" && <span className="text-xs text-muted">{eisenhower.emoji}</span>}
-                      <span className="text-xs text-muted ml-auto">{formatXP(xp)} XP | {completedCount}/{nutsLeaves.length} tasks</span>
+                      <span className="text-xs text-muted ml-auto">
+                        {formatXP(xp)} XP | 🍃{completedCount}/{nutsLeaves.length} 🪵{nutsTrunks.length} 🌱{nutsRoots.length}
+                      </span>
                     </div>
 
-                    {/* タグ */}
                     {n.tags.length > 0 && (
                       <div className="flex gap-1 flex-wrap mt-2">
                         {n.tags.map((t, i) => <span key={i} className="px-2 py-0.5 bg-accent/10 text-accent rounded text-xs">#{t}</span>)}
@@ -172,7 +181,6 @@ export function NutsTab({ nuts, leaves, trunks, worklogs, tags, onAdd, onUpdate,
                   <span className="text-muted text-sm flex-shrink-0">{isExpanded ? "▲" : "▼"}</span>
                 </div>
 
-                {/* ミニマイルストーンバー（カードフェイス下部） */}
                 {n.startDate && n.deadline && !isExpanded && (
                   <MiniMilestoneBar startDate={n.startDate} deadline={n.deadline} status={n.status} />
                 )}
@@ -182,10 +190,15 @@ export function NutsTab({ nuts, leaves, trunks, worklogs, tags, onAdd, onUpdate,
                   <div className="mt-4 space-y-4 border-t border-panel pt-4 animate-slide-in">
                     {n.description && <p className="text-sm text-muted">{n.description}</p>}
 
-                    {/* 画像/アイコン編集 */}
+                    {/* 画像/アイコン/バージョン編集 */}
                     <div className="flex gap-4 flex-wrap">
                       <label className="flex items-center gap-2 text-sm text-muted">アイコン:
                         <input type="text" value={n.icon || ""} onChange={(e) => onUpdate(n.id, { icon: e.target.value || undefined })} className="w-16 text-sm text-center" placeholder="🌰" />
+                      </label>
+                      <label className="flex items-center gap-2 text-sm text-muted">バージョン:
+                        <select value={n.version || "未完"} onChange={(e) => onUpdate(n.id, { version: e.target.value })} className="text-sm">
+                          {VERSION_OPTIONS.map((v) => <option key={v} value={v}>{v}</option>)}
+                        </select>
                       </label>
                       <label className="flex items-center gap-2 text-sm text-muted flex-1">画像URL:
                         <input type="text" value={n.imageUrl || ""} onChange={(e) => onUpdate(n.id, { imageUrl: e.target.value || undefined })} className="flex-1 text-sm" placeholder="https://..." />
@@ -203,13 +216,18 @@ export function NutsTab({ nuts, leaves, trunks, worklogs, tags, onAdd, onUpdate,
                     </div>
 
                     <MilestoneBar startDate={n.startDate} deadline={n.deadline} status={n.status} />
-
-                    {/* ステータスワークフローステッパー */}
                     <StatusStepper currentStatus={n.status} onStatusChange={(s) => onUpdate(n.id, { status: s })} />
 
-                    <div className="flex gap-2">
-                      {cat !== "in_progress" && (
-                        <button onClick={() => onStartWork(n.id)} className="btn-primary text-sm">作業開始</button>
+                    {/* 子アイテムサマリー */}
+                    <ChildItemsSummary nutsId={n.id} leaves={nutsLeaves} trunks={nutsTrunks} roots={nutsRoots} onAddLeaf={onAddLeaf} onAddTrunk={onAddTrunk} onAddRoot={onAddRoot} />
+
+                    {/* アクションボタン */}
+                    <div className="flex gap-2 flex-wrap">
+                      {cat !== "in_progress" && cat !== "complete" && (
+                        <button onClick={() => onStartWork(n.id)} className="btn-primary text-sm">▶ 作業開始</button>
+                      )}
+                      {cat !== "complete" && (
+                        <button onClick={() => onCompleteNuts(n.id)} className="px-3 py-1.5 rounded-lg text-sm bg-green-500/20 text-green-400 border border-green-500/50 hover:bg-green-500/30 transition-colors">✅ 完了！</button>
                       )}
                       <button onClick={() => onDelete(n.id)} className="btn-secondary text-sm text-red-400">削除</button>
                     </div>
@@ -220,6 +238,90 @@ export function NutsTab({ nuts, leaves, trunks, worklogs, tags, onAdd, onUpdate,
           );
         })}
       </div>
+    </div>
+  );
+}
+
+/** 子アイテムサマリー + クイック追加 */
+function ChildItemsSummary({ nutsId, leaves, trunks, roots, onAddLeaf, onAddTrunk, onAddRoot }: {
+  nutsId: string;
+  leaves: Leaf[];
+  trunks: Trunk[];
+  roots: Root[];
+  onAddLeaf: (data: Omit<Leaf, "id" | "createdAt">) => void;
+  onAddTrunk: (data: Omit<Trunk, "id" | "createdAt">) => void;
+  onAddRoot: (data: Omit<Root, "id" | "createdAt">) => void;
+}) {
+  const [addMode, setAddMode] = useState<"leaf" | "trunk" | "root" | null>(null);
+  const [title, setTitle] = useState("");
+
+  const handleAdd = () => {
+    if (!title.trim()) return;
+    if (addMode === "leaf") {
+      onAddLeaf({ title: title.trim(), nutsId, difficulty: "easy", priority: "medium" });
+    } else if (addMode === "trunk") {
+      onAddTrunk({ nutsId, title: title.trim(), type: "non-issue", value: 2, status: "pending", what: "", idea: "", conclusion: "", tags: [] });
+    } else if (addMode === "root") {
+      onAddRoot({ nutsId, title: title.trim(), type: "seed", tags: [], what: "", content: "" });
+    }
+    setTitle("");
+    setAddMode(null);
+  };
+
+  return (
+    <div className="bg-panel rounded-lg p-3 space-y-3">
+      <div className="text-xs text-muted mb-1">子アイテム</div>
+
+      {/* サマリーバッジ */}
+      <div className="flex gap-3 flex-wrap">
+        <span className="flex items-center gap-1 text-sm">
+          <span>🍃</span>
+          <span className="text-primary font-medium">{leaves.filter((l) => l.completedAt).length}/{leaves.length}</span>
+          <span className="text-muted text-xs">タスク</span>
+        </span>
+        <span className="flex items-center gap-1 text-sm">
+          <span>🪵</span>
+          <span className="text-primary font-medium">{trunks.length}</span>
+          <span className="text-muted text-xs">イシュー</span>
+        </span>
+        <span className="flex items-center gap-1 text-sm">
+          <span>🌱</span>
+          <span className="text-primary font-medium">{roots.length}</span>
+          <span className="text-muted text-xs">ナレッジ</span>
+        </span>
+      </div>
+
+      {/* ミニリスト（最新5件） */}
+      {leaves.length > 0 && (
+        <div className="space-y-1">
+          {leaves.slice(0, 5).map((l) => {
+            const st = getLeafStatus(l);
+            return (
+              <div key={l.id} className="flex items-center gap-2 text-xs">
+                <span className={`w-1.5 h-1.5 rounded-full ${st === "completed" ? "bg-green-400" : st === "in_progress" ? "bg-accent" : "bg-gray-500"}`} />
+                <span className={`truncate ${st === "completed" ? "line-through text-muted" : "text-primary"}`}>{l.title}</span>
+              </div>
+            );
+          })}
+          {leaves.length > 5 && <div className="text-[10px] text-muted">他{leaves.length - 5}件</div>}
+        </div>
+      )}
+
+      {/* クイック追加ボタン */}
+      {addMode === null ? (
+        <div className="flex gap-2">
+          <button onClick={() => setAddMode("leaf")} className="px-2 py-1 rounded text-xs bg-card border border-panel hover:border-accent transition-colors">+ 🍃 タスク</button>
+          <button onClick={() => setAddMode("trunk")} className="px-2 py-1 rounded text-xs bg-card border border-panel hover:border-accent transition-colors">+ 🪵 イシュー</button>
+          <button onClick={() => setAddMode("root")} className="px-2 py-1 rounded text-xs bg-card border border-panel hover:border-accent transition-colors">+ 🌱 ナレッジ</button>
+        </div>
+      ) : (
+        <div className="flex gap-2 animate-slide-in">
+          <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder={addMode === "leaf" ? "タスク名" : addMode === "trunk" ? "イシュー名" : "ナレッジ名"} className="flex-1 text-sm" autoFocus
+            onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleAdd(); } if (e.key === "Escape") setAddMode(null); }} />
+          <button onClick={handleAdd} className="btn-primary text-xs">追加</button>
+          <button onClick={() => { setAddMode(null); setTitle(""); }} className="text-xs text-muted hover:text-primary">✕</button>
+        </div>
+      )}
     </div>
   );
 }
