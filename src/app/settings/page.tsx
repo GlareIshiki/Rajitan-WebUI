@@ -114,25 +114,29 @@ export default function SettingsPage() {
             <div className="flex gap-3">
               <button
                 onClick={() => toggleMode()}
-                className={`flex-1 p-4 rounded-xl border transition-all flex items-center justify-center gap-3 ${
-                  isDark
-                    ? "border-[var(--theme-primary)] bg-[var(--theme-primary)]/10"
-                    : ""
-                }`}
-                style={{ borderColor: isDark ? 'var(--theme-primary)' : 'var(--mode-border)', backgroundColor: isDark ? 'var(--theme-primary)' : 'transparent', opacity: isDark ? 0.2 : 1 }}
+                className="flex-1 p-4 rounded-xl border-2 transition-all flex items-center justify-center gap-3"
+                style={{
+                  borderColor: isDark ? 'var(--theme-primary)' : 'var(--mode-border)',
+                  backgroundColor: isDark ? 'var(--theme-primary)' : 'var(--mode-bg-secondary)',
+                  color: isDark ? 'white' : 'var(--mode-text)',
+                }}
               >
                 <span className="text-2xl">🌙</span>
                 <span className="font-medium">ダーク</span>
-                {isDark && <span className="ml-auto text-xs px-2 py-1 rounded-full" style={{ backgroundColor: 'var(--theme-primary)', color: 'white' }}>選択中</span>}
+                {isDark && <span className="ml-auto text-xs px-2 py-1 rounded-full bg-white/20">選択中</span>}
               </button>
               <button
                 onClick={() => toggleMode()}
-                className={`flex-1 p-4 rounded-xl border transition-all flex items-center justify-center gap-3`}
-                style={{ borderColor: !isDark ? 'var(--theme-primary)' : 'var(--mode-border)', backgroundColor: !isDark ? 'var(--theme-primary)' : 'transparent', opacity: !isDark ? 0.2 : 1 }}
+                className="flex-1 p-4 rounded-xl border-2 transition-all flex items-center justify-center gap-3"
+                style={{
+                  borderColor: !isDark ? 'var(--theme-primary)' : 'var(--mode-border)',
+                  backgroundColor: !isDark ? 'var(--theme-primary)' : 'var(--mode-bg-secondary)',
+                  color: !isDark ? 'white' : 'var(--mode-text)',
+                }}
               >
                 <span className="text-2xl">☀️</span>
                 <span className="font-medium">ライト</span>
-                {!isDark && <span className="ml-auto text-xs px-2 py-1 rounded-full" style={{ backgroundColor: 'var(--theme-primary)', color: 'white' }}>選択中</span>}
+                {!isDark && <span className="ml-auto text-xs px-2 py-1 rounded-full bg-white/20">選択中</span>}
               </button>
             </div>
           </div>
@@ -145,19 +149,19 @@ export default function SettingsPage() {
                 <button
                   key={t.id}
                   onClick={() => setTheme(t.id)}
-                  className={`relative p-4 rounded-xl border transition-all ${
-                    theme === t.id ? "scale-105" : "hover:scale-102"
+                  className={`relative p-4 rounded-xl border-2 transition-all ${
+                    theme === t.id ? "scale-105" : ""
                   }`}
                   style={{
                     borderColor: theme === t.id ? 'var(--theme-primary)' : 'var(--mode-border)',
-                    backgroundColor: theme === t.id ? 'var(--theme-primary)' : 'var(--mode-bg-card)',
-                    opacity: theme === t.id ? 0.2 : 1,
+                    backgroundColor: 'var(--mode-bg-secondary)',
+                    boxShadow: theme === t.id ? '0 0 0 3px var(--theme-glow)' : 'none',
                   }}
                 >
-                  <div className={`w-8 h-8 mx-auto rounded-full ${t.color} mb-2 shadow-lg`} />
-                  <div className="text-xs text-center" style={{ color: 'var(--mode-text-secondary)' }}>{t.name}</div>
+                  <div className={`w-10 h-10 mx-auto rounded-full ${t.color} mb-2 shadow-lg ${theme === t.id ? 'ring-4 ring-white/50' : ''}`} />
+                  <div className="text-xs text-center font-medium" style={{ color: theme === t.id ? 'var(--theme-primary)' : 'var(--mode-text-secondary)' }}>{t.name}</div>
                   {theme === t.id && (
-                    <div className="absolute top-2 right-2 w-2 h-2 rounded-full" style={{ backgroundColor: 'var(--theme-primary)' }} />
+                    <div className="absolute top-2 right-2 text-sm">✓</div>
                   )}
                 </button>
               ))}
