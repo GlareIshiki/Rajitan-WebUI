@@ -1,7 +1,8 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
-import { useLocalStorage } from "./useLocalStorage";
+import { useCallback, useMemo, useState, useEffect, useRef } from "react";
+import { useSession } from "next-auth/react";
+import { api } from "@/lib/api";
 import type {
   LeveMagiState,
   Nuts,
@@ -35,41 +36,147 @@ function generateId(): string {
 }
 
 export function useLeveMagi() {
-  const [rawState, setRawState, isLoaded] = useLocalStorage<LeveMagiState>(
-    STORAGE_KEY,
-    DEFAULT_STATE
-  );
+  const { data: session, status: sessionStatus } = useSession();
+  const token = (session as { accessToken?: string } | null)?.accessToken;
 
-  // マイグレーション適用
-  const state = useMemo(() => migrateState(rawState), [rawState]);
-  const setState = useCallback(
-    (updater: LeveMagiState | ((prev: LeveMagiState) => LeveMagiState)) => {
-      if (typeof updater === "function") {
-        setRawState((prev) => updater(migrateState(prev)));
-      } else {
-        setRawState(updater);
-      }
+  const [state, setState] = useState<LeveMagiState>(DEFAULT_STATE);
+  const [isLoaded, setIsLoaded] = useState(false);
+  const tokenRef = useRef(token);
+  tokenRef.current = token;
+
+  // Helper: fire API call in background (no-op if no token)
+  const apiCall = useCallback(
+    (fn: (t: string) => Promise<unknown>) => {
+      const t = tokenRef.current;
+      if (!t) return;
+      fn(t).catch((err) => console.error("LeveMagi API error:", err));
     },
-    [setRawState]
+    []
   );
 
-  // === 派生データ ===
+  // === Initial load ===
+  useEffect(() => {
+    if (sessionStatus === "loading") return;
+
+    if (!token) {
+      // No auth - fallback to localStorage
+      try {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (stored) {
+          setState(migrateState(JSON.parse(stored)));
+        }
+      } catch (err) {
+        console.error("Failed to load from localStorage:", err);
+      }
+      setIsLoaded(true);
+      return;
+    }
+
+    // Load from API
+    api
+      .get<LeveMagiState>("/api/levemagi/state", token)
+      .then((data) => {
+        setState(data);
+        setIsLoaded(true);
+
+        // Auto-migrate localStorage data if API state is empty
+        try {
+          const stored = localStorage.getItem(STORAGE_KEY);
+          if (stored) {
+            const localData = migrateState(JSON.parse(stored));
+            if (localData.nuts.length > 0 && data.nuts.length === 0) {
+              api
+                .post<LeveMagiState>("/api/levemagi/import", localData, token)
+                .then((imported) => {
+                  setState(imported);
+                  localStorage.removeItem(STORAGE_KEY);
+                })
+                .catch(console.error);
+            } else {
+              localStorage.removeItem(STORAGE_KEY);
+            }
+          }
+        } catch {
+          // ignore localStorage errors
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to load from API, fallback to localStorage:", err);
+        try {
+          const stored = localStorage.getItem(STORAGE_KEY);
+          if (stored) {
+            setState(migrateState(JSON.parse(stored)));
+          }
+        } catch {
+          // ignore
+        }
+        setIsLoaded(true);
+      });
+  }, [token, sessionStatus]);
+
+  // === Polling (30s interval, pause when tab is hidden) ===
+  useEffect(() => {
+    if (!token || !isLoaded) return;
+
+    const POLL_INTERVAL = 30_000;
+    let timerId: ReturnType<typeof setInterval> | null = null;
+
+    const fetchState = () => {
+      api
+        .get<LeveMagiState>("/api/levemagi/state", tokenRef.current!)
+        .then((data) => setState(data))
+        .catch((err) => console.error("LeveMagi poll error:", err));
+    };
+
+    const startPolling = () => {
+      if (timerId) return;
+      timerId = setInterval(fetchState, POLL_INTERVAL);
+    };
+
+    const stopPolling = () => {
+      if (timerId) {
+        clearInterval(timerId);
+        timerId = null;
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        fetchState();
+        startPolling();
+      } else {
+        stopPolling();
+      }
+    };
+
+    startPolling();
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      stopPolling();
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [token, isLoaded]);
+
+  // === Derived data ===
   const totalXP = useMemo(() => calculateTotalXP(state.leaves), [state.leaves]);
   const level = useMemo(() => calculateLevel(totalXP), [totalXP]);
   const xpProgress = useMemo(() => getXPToNextLevel(totalXP), [totalXP]);
 
-  // === Nuts 操作 ===
+  // === Nuts operations ===
   const addNuts = useCallback(
     (data: Omit<Nuts, "id" | "createdAt">) => {
+      const id = generateId();
       const newNuts: Nuts = {
         ...data,
-        id: generateId(),
+        id,
         createdAt: new Date().toISOString(),
       };
       setState((prev) => ({ ...prev, nuts: [...prev.nuts, newNuts] }));
+      apiCall((t) => api.post("/api/levemagi/nuts", { id, ...data }, t));
       return newNuts;
     },
-    [setState]
+    [apiCall]
   );
 
   const updateNuts = useCallback(
@@ -78,8 +185,9 @@ export function useLeveMagi() {
         ...prev,
         nuts: prev.nuts.map((n) => (n.id === id ? { ...n, ...data } : n)),
       }));
+      apiCall((t) => api.put(`/api/levemagi/nuts/${id}`, data, t));
     },
-    [setState]
+    [apiCall]
   );
 
   const deleteNuts = useCallback(
@@ -91,20 +199,34 @@ export function useLeveMagi() {
         leaves: prev.leaves.filter((l) => l.nutsId !== id),
         worklogs: prev.worklogs.filter((w) => w.nutsId !== id),
       }));
+      apiCall((t) => api.delete(`/api/levemagi/nuts/${id}`, t));
     },
-    [setState]
+    [apiCall]
   );
 
-  // 未完了Worklogを閉じるヘルパー
-  const closeOpenWorklogs = (worklogs: Worklog[], nutsId: string, now: string, nutsStatus: NutsStatus, phaseLabel: string, currentLevel: number): Worklog[] => {
+  // Close open worklogs helper
+  const closeOpenWorklogs = (
+    worklogs: Worklog[],
+    nutsId: string,
+    now: string,
+    nutsStatus: NutsStatus,
+    phaseLabel: string,
+    currentLevel: number
+  ): Worklog[] => {
     return worklogs.map((w) =>
       w.nutsId === nutsId && !w.completedAt
-        ? { ...w, completedAt: now, statusSnapshot: nutsStatus, phaseSnapshot: phaseLabel, levelSnapshot: currentLevel }
+        ? {
+            ...w,
+            completedAt: now,
+            statusSnapshot: nutsStatus,
+            phaseSnapshot: phaseLabel,
+            levelSnapshot: currentLevel,
+          }
         : w
     );
   };
 
-  // 作業開始（ステータス変更 + Worklog生成）
+  // Start work (status change + Worklog generation)
   const startWork = useCallback(
     (nutsId: string, newStatus?: NutsStatus) => {
       setState((prev) => {
@@ -116,8 +238,14 @@ export function useLeveMagi() {
         const nowISO = now.toISOString();
         const currentLevel = calculateLevel(calculateTotalXP(prev.leaves));
 
-        // 前回の未完了Worklogを自動クローズ
-        const updatedWorklogs = closeOpenWorklogs(prev.worklogs, nutsId, nowISO, nuts.status, phase.label, currentLevel);
+        const updatedWorklogs = closeOpenWorklogs(
+          prev.worklogs,
+          nutsId,
+          nowISO,
+          nuts.status,
+          phase.label,
+          currentLevel
+        );
 
         const worklog: Worklog = {
           id: generateId(),
@@ -136,7 +264,7 @@ export function useLeveMagi() {
             n.id === nutsId
               ? {
                   ...n,
-                  status: newStatus || "本作業中",
+                  status: newStatus || ("本作業中" as NutsStatus),
                   startDate: n.startDate || nowISO,
                 }
               : n
@@ -144,11 +272,12 @@ export function useLeveMagi() {
           worklogs: [...updatedWorklogs, worklog],
         };
       });
+      apiCall((t) => api.post(`/api/levemagi/nuts/${nutsId}/start-work`, {}, t));
     },
-    [setState]
+    [apiCall]
   );
 
-  // 成果物を完了にする
+  // Complete a Nuts
   const completeNuts = useCallback(
     (nutsId: string) => {
       setState((prev) => {
@@ -159,8 +288,14 @@ export function useLeveMagi() {
         const phase = detectPhase(nuts.startDate, nuts.deadline, nuts.status);
         const currentLevel = calculateLevel(calculateTotalXP(prev.leaves));
 
-        // 未完了Worklogをクローズ
-        const updatedWorklogs = closeOpenWorklogs(prev.worklogs, nutsId, nowISO, "完了", phase.label, currentLevel);
+        const updatedWorklogs = closeOpenWorklogs(
+          prev.worklogs,
+          nutsId,
+          nowISO,
+          "完了" as NutsStatus,
+          phase.label,
+          currentLevel
+        );
 
         return {
           ...prev,
@@ -170,22 +305,25 @@ export function useLeveMagi() {
           worklogs: updatedWorklogs,
         };
       });
+      apiCall((t) => api.post(`/api/levemagi/nuts/${nutsId}/complete`, {}, t));
     },
-    [setState]
+    [apiCall]
   );
 
-  // === Trunk 操作 ===
+  // === Trunk operations ===
   const addTrunk = useCallback(
     (data: Omit<Trunk, "id" | "createdAt">) => {
+      const id = generateId();
       const newTrunk: Trunk = {
         ...data,
-        id: generateId(),
+        id,
         createdAt: new Date().toISOString(),
       };
       setState((prev) => ({ ...prev, trunks: [...prev.trunks, newTrunk] }));
+      apiCall((t) => api.post("/api/levemagi/trunks", { id, ...data }, t));
       return newTrunk;
     },
-    [setState]
+    [apiCall]
   );
 
   const updateTrunk = useCallback(
@@ -194,8 +332,9 @@ export function useLeveMagi() {
         ...prev,
         trunks: prev.trunks.map((t) => (t.id === id ? { ...t, ...data } : t)),
       }));
+      apiCall((t) => api.put(`/api/levemagi/trunks/${id}`, data, t));
     },
-    [setState]
+    [apiCall]
   );
 
   const deleteTrunk = useCallback(
@@ -207,22 +346,25 @@ export function useLeveMagi() {
           l.trunkId === id ? { ...l, trunkId: undefined } : l
         ),
       }));
+      apiCall((t) => api.delete(`/api/levemagi/trunks/${id}`, t));
     },
-    [setState]
+    [apiCall]
   );
 
-  // === Leaf 操作 ===
+  // === Leaf operations ===
   const addLeaf = useCallback(
     (data: Omit<Leaf, "id" | "createdAt">) => {
+      const id = generateId();
       const newLeaf: Leaf = {
         ...data,
-        id: generateId(),
+        id,
         createdAt: new Date().toISOString(),
       };
       setState((prev) => ({ ...prev, leaves: [...prev.leaves, newLeaf] }));
+      apiCall((t) => api.post("/api/levemagi/leaves", { id, ...data }, t));
       return newLeaf;
     },
-    [setState]
+    [apiCall]
   );
 
   const startLeaf = useCallback(
@@ -233,8 +375,9 @@ export function useLeveMagi() {
           l.id === id ? { ...l, startedAt: new Date().toISOString() } : l
         ),
       }));
+      apiCall((t) => api.post(`/api/levemagi/leaves/${id}/start`, {}, t));
     },
-    [setState]
+    [apiCall]
   );
 
   const completeLeaf = useCallback(
@@ -267,8 +410,9 @@ export function useLeveMagi() {
 
         let newRoots = prev.roots;
         if (createSeed) {
+          const seedId = generateId();
           const seed: Root = {
-            id: generateId(),
+            id: seedId,
             nutsId: leaf.nutsId,
             title: `${leaf.title}から学んだこと`,
             type: "seed",
@@ -278,6 +422,18 @@ export function useLeveMagi() {
             createdAt: new Date().toISOString(),
           };
           newRoots = [...prev.roots, seed];
+          // Persist seed to API
+          apiCall((t) =>
+            api.post("/api/levemagi/roots", {
+              id: seedId,
+              nutsId: leaf.nutsId,
+              title: seed.title,
+              type: "seed",
+              tags: [],
+              what: "",
+              content: "",
+            }, t)
+          );
         }
 
         const newTotalXP = calculateTotalXP(newLeaves);
@@ -296,9 +452,13 @@ export function useLeveMagi() {
         };
       });
 
+      apiCall((t) =>
+        api.post(`/api/levemagi/leaves/${id}/complete`, { actualHours }, t)
+      );
+
       return xpSubtotal;
     },
-    [setState, state.leaves, level]
+    [apiCall, state.leaves, level]
   );
 
   const deleteLeaf = useCallback(
@@ -307,22 +467,25 @@ export function useLeveMagi() {
         ...prev,
         leaves: prev.leaves.filter((l) => l.id !== id),
       }));
+      apiCall((t) => api.delete(`/api/levemagi/leaves/${id}`, t));
     },
-    [setState]
+    [apiCall]
   );
 
-  // === Root 操作 ===
+  // === Root operations ===
   const addRoot = useCallback(
     (data: Omit<Root, "id" | "createdAt">) => {
+      const id = generateId();
       const newRoot: Root = {
         ...data,
-        id: generateId(),
+        id,
         createdAt: new Date().toISOString(),
       };
       setState((prev) => ({ ...prev, roots: [...prev.roots, newRoot] }));
+      apiCall((t) => api.post("/api/levemagi/roots", { id, ...data }, t));
       return newRoot;
     },
-    [setState]
+    [apiCall]
   );
 
   const updateRoot = useCallback(
@@ -331,8 +494,9 @@ export function useLeveMagi() {
         ...prev,
         roots: prev.roots.map((r) => (r.id === id ? { ...r, ...data } : r)),
       }));
+      apiCall((t) => api.put(`/api/levemagi/roots/${id}`, data, t));
     },
-    [setState]
+    [apiCall]
   );
 
   const deleteRoot = useCallback(
@@ -341,22 +505,25 @@ export function useLeveMagi() {
         ...prev,
         roots: prev.roots.filter((r) => r.id !== id),
       }));
+      apiCall((t) => api.delete(`/api/levemagi/roots/${id}`, t));
     },
-    [setState]
+    [apiCall]
   );
 
-  // === Portal 操作 ===
+  // === Portal operations ===
   const addPortal = useCallback(
     (data: Omit<Portal, "id" | "createdAt">) => {
+      const id = generateId();
       const newPortal: Portal = {
         ...data,
-        id: generateId(),
+        id,
         createdAt: new Date().toISOString(),
       };
       setState((prev) => ({ ...prev, portals: [...prev.portals, newPortal] }));
+      apiCall((t) => api.post("/api/levemagi/portals", { id, ...data }, t));
       return newPortal;
     },
-    [setState]
+    [apiCall]
   );
 
   const updatePortal = useCallback(
@@ -367,8 +534,9 @@ export function useLeveMagi() {
           p.id === id ? { ...p, ...data } : p
         ),
       }));
+      apiCall((t) => api.put(`/api/levemagi/portals/${id}`, data, t));
     },
-    [setState]
+    [apiCall]
   );
 
   const deletePortal = useCallback(
@@ -377,25 +545,28 @@ export function useLeveMagi() {
         ...prev,
         portals: prev.portals.filter((p) => p.id !== id),
       }));
+      apiCall((t) => api.delete(`/api/levemagi/portals/${id}`, t));
     },
-    [setState]
+    [apiCall]
   );
 
-  // === Resource 操作 ===
+  // === Resource operations ===
   const addResource = useCallback(
     (data: Omit<Resource, "id" | "createdAt">) => {
+      const id = generateId();
       const newResource: Resource = {
         ...data,
-        id: generateId(),
+        id,
         createdAt: new Date().toISOString(),
       };
       setState((prev) => ({
         ...prev,
         resources: [...prev.resources, newResource],
       }));
+      apiCall((t) => api.post("/api/levemagi/resources", { id, ...data }, t));
       return newResource;
     },
-    [setState]
+    [apiCall]
   );
 
   const updateResource = useCallback(
@@ -406,8 +577,9 @@ export function useLeveMagi() {
           r.id === id ? { ...r, ...data } : r
         ),
       }));
+      apiCall((t) => api.put(`/api/levemagi/resources/${id}`, data, t));
     },
-    [setState]
+    [apiCall]
   );
 
   const deleteResource = useCallback(
@@ -416,22 +588,27 @@ export function useLeveMagi() {
         ...prev,
         resources: prev.resources.filter((r) => r.id !== id),
       }));
+      apiCall((t) => api.delete(`/api/levemagi/resources/${id}`, t));
     },
-    [setState]
+    [apiCall]
   );
 
-  // === Tag 操作 ===
+  // === Tag operations ===
   const addTag = useCallback(
     (name: string) => {
+      const id = generateId();
       const newTag: Tag = {
-        id: generateId(),
+        id,
         name,
         isFavorite: false,
       };
       setState((prev) => ({ ...prev, tags: [...prev.tags, newTag] }));
+      apiCall((t) =>
+        api.post("/api/levemagi/tags", { id, name, isFavorite: false }, t)
+      );
       return newTag;
     },
-    [setState]
+    [apiCall]
   );
 
   const deleteTag = useCallback(
@@ -440,11 +617,12 @@ export function useLeveMagi() {
         ...prev,
         tags: prev.tags.filter((t) => t.id !== id),
       }));
+      apiCall((t) => api.delete(`/api/levemagi/tags/${id}`, t));
     },
-    [setState]
+    [apiCall]
   );
 
-  // === ガチャ ===
+  // === Gacha ===
   const doGacha = useCallback(() => {
     if (state.userData.gachaTickets <= 0) return null;
     const item = pullGacha();
@@ -458,8 +636,9 @@ export function useLeveMagi() {
           : [...prev.userData.collectedItems, item.id],
       },
     }));
+    apiCall((t) => api.post("/api/levemagi/user/gacha", {}, t));
     return item;
-  }, [setState, state.userData.gachaTickets]);
+  }, [apiCall, state.userData.gachaTickets]);
 
   return {
     state,
@@ -497,7 +676,7 @@ export function useLeveMagi() {
     // Tag
     addTag,
     deleteTag,
-    // ガチャ
+    // Gacha
     doGacha,
   };
 }

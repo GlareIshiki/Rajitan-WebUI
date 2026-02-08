@@ -2,8 +2,28 @@
 
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useTheme, ThemeColor } from "@/components/ThemeProvider";
+import { api } from "@/lib/api";
+
+interface Guild {
+  id: string;
+  name: string;
+  memberCount: number;
+  iconUrl: string | null;
+}
+
+interface GuildSettingsData {
+  guildId: string;
+  guildName: string;
+  characterName: string;
+  personalityType: string;
+  features: {
+    autoSummary: boolean;
+    autoQuiz: boolean;
+    autoMusic: boolean;
+  };
+}
 
 interface GuildSettings {
   id: string;
@@ -45,6 +65,9 @@ export default function SettingsPage() {
   const [guilds, setGuilds] = useState<GuildSettings[]>([]);
   const [selectedGuild, setSelectedGuild] = useState<GuildSettings | null>(null);
   const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  const token = (session as { accessToken?: string } | null)?.accessToken;
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -52,35 +75,111 @@ export default function SettingsPage() {
     }
   }, [status, router]);
 
+  // Fetch guilds list
+  const fetchGuilds = useCallback(async () => {
+    if (!token) return;
+    setLoading(true);
+
+    try {
+      const guildList = await api.get<Guild[]>("/api/bot/guilds", token);
+
+      // Fetch settings for each guild
+      const guildSettingsList: GuildSettings[] = [];
+      for (const guild of guildList) {
+        try {
+          const settings = await api.get<GuildSettingsData>(
+            `/api/bot/guilds/${guild.id}/settings`,
+            token
+          );
+          guildSettingsList.push({
+            id: guild.id,
+            name: guild.name,
+            icon: guild.iconUrl || undefined,
+            features: settings.features,
+            character: settings.personalityType,
+            summaryInterval: 30,
+            quizInterval: 45,
+          });
+        } catch {
+          // If settings fetch fails, use defaults
+          guildSettingsList.push({
+            id: guild.id,
+            name: guild.name,
+            icon: guild.iconUrl || undefined,
+            features: { autoSummary: false, autoQuiz: false, autoMusic: false },
+            character: "default",
+            summaryInterval: 30,
+            quizInterval: 45,
+          });
+        }
+      }
+
+      setGuilds(guildSettingsList);
+      if (guildSettingsList.length > 0 && !selectedGuild) {
+        setSelectedGuild(guildSettingsList[0]);
+      }
+    } catch (e) {
+      console.error("Failed to fetch guilds:", e);
+    } finally {
+      setLoading(false);
+    }
+  }, [token, selectedGuild]);
+
   useEffect(() => {
-    const demoGuilds: GuildSettings[] = [
-      {
-        id: "1",
-        name: "テストサーバー",
-        features: { autoSummary: true, autoQuiz: true, autoMusic: false },
-        character: "cheerful",
-        summaryInterval: 30,
-        quizInterval: 45,
-      },
-      {
-        id: "2",
-        name: "開発サーバー",
-        features: { autoSummary: true, autoQuiz: false, autoMusic: true },
-        character: "professional",
-        summaryInterval: 60,
-        quizInterval: 60,
-      },
-    ];
-    setGuilds(demoGuilds);
-    setSelectedGuild(demoGuilds[0]);
-  }, []);
+    fetchGuilds();
+  }, [fetchGuilds]);
+
+  // When selecting a guild, fetch its latest settings
+  const handleSelectGuild = useCallback(
+    async (guild: GuildSettings) => {
+      if (!token) {
+        setSelectedGuild(guild);
+        return;
+      }
+
+      try {
+        const settings = await api.get<GuildSettingsData>(
+          `/api/bot/guilds/${guild.id}/settings`,
+          token
+        );
+        const updated: GuildSettings = {
+          ...guild,
+          features: settings.features,
+          character: settings.personalityType,
+        };
+        setSelectedGuild(updated);
+      } catch {
+        setSelectedGuild(guild);
+      }
+    },
+    [token]
+  );
 
   const handleSave = async () => {
-    if (!selectedGuild) return;
+    if (!selectedGuild || !token) return;
     setSaving(true);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    setSaving(false);
-    alert("設定を保存しました");
+
+    try {
+      await api.put(
+        `/api/bot/guilds/${selectedGuild.id}/settings`,
+        { personalityType: selectedGuild.character },
+        token
+      );
+
+      // Update the guilds list with saved data
+      setGuilds((prev) =>
+        prev.map((g) =>
+          g.id === selectedGuild.id ? { ...selectedGuild } : g
+        )
+      );
+
+      alert("設定を保存しました");
+    } catch (e) {
+      console.error("Failed to save settings:", e);
+      alert("設定の保存に失敗しました");
+    } finally {
+      setSaving(false);
+    }
   };
 
   if (status === "loading") {
@@ -161,21 +260,27 @@ export default function SettingsPage() {
           <div className="lg:col-span-1">
             <div className="card p-4">
               <h2 className="font-bold mb-4">サーバー一覧</h2>
-              <div className="space-y-2">
-                {guilds.map((guild) => (
-                  <button
-                    key={guild.id}
-                    onClick={() => setSelectedGuild(guild)}
-                    className={`w-full text-left p-3 rounded-lg transition-all ${
-                      selectedGuild?.id === guild.id
-                        ? "bg-accent text-white"
-                        : "bg-card text-primary hover:border-accent"
-                    }`}
-                  >
-                    {guild.name}
-                  </button>
-                ))}
-              </div>
+              {loading ? (
+                <div className="text-center py-4 text-muted">読み込み中...</div>
+              ) : guilds.length === 0 ? (
+                <div className="text-center py-4 text-muted">サーバーが見つかりません</div>
+              ) : (
+                <div className="space-y-2">
+                  {guilds.map((guild) => (
+                    <button
+                      key={guild.id}
+                      onClick={() => handleSelectGuild(guild)}
+                      className={`w-full text-left p-3 rounded-lg transition-all ${
+                        selectedGuild?.id === guild.id
+                          ? "bg-accent text-white"
+                          : "bg-card text-primary hover:border-accent"
+                      }`}
+                    >
+                      {guild.name}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 

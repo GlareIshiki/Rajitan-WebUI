@@ -2,14 +2,22 @@
 
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { api } from "@/lib/api";
 
 interface DailyStats {
   date: string;
   summaries: number;
   quizzes: number;
   music: number;
-  messages: number;
+  total: number;
+}
+
+interface Guild {
+  id: string;
+  name: string;
+  memberCount: number;
+  iconUrl: string | null;
 }
 
 interface GuildStats {
@@ -27,6 +35,9 @@ export default function StatsPage() {
   const [dailyStats, setDailyStats] = useState<DailyStats[]>([]);
   const [guildStats, setGuildStats] = useState<GuildStats[]>([]);
   const [period, setPeriod] = useState<"7d" | "30d" | "90d">("7d");
+  const [loading, setLoading] = useState(true);
+
+  const token = (session as { accessToken?: string } | null)?.accessToken;
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -34,52 +45,51 @@ export default function StatsPage() {
     }
   }, [status, router]);
 
-  useEffect(() => {
-    // デモデータ生成
+  const fetchStats = useCallback(async () => {
+    if (!token) return;
+    setLoading(true);
+
     const days = period === "7d" ? 7 : period === "30d" ? 30 : 90;
-    const stats: DailyStats[] = [];
 
-    for (let i = days - 1; i >= 0; i--) {
-      const date = new Date();
-      date.setDate(date.getDate() - i);
-      stats.push({
-        date: date.toLocaleDateString("ja-JP", { month: "short", day: "numeric" }),
-        summaries: Math.floor(Math.random() * 20) + 5,
-        quizzes: Math.floor(Math.random() * 15) + 2,
-        music: Math.floor(Math.random() * 10) + 1,
-        messages: Math.floor(Math.random() * 500) + 100,
-      });
+    try {
+      const [dailyData, guildsData] = await Promise.allSettled([
+        api.get<DailyStats[]>(`/api/bot/stats/daily?days=${days}`, token),
+        api.get<Guild[]>("/api/bot/guilds", token),
+      ]);
+
+      if (dailyData.status === "fulfilled") {
+        // Format dates for display
+        const formatted = dailyData.value.map((d) => ({
+          ...d,
+          date: formatDate(d.date),
+        }));
+        setDailyStats(formatted);
+      } else {
+        setDailyStats([]);
+      }
+
+      if (guildsData.status === "fulfilled") {
+        // Convert guild list to guild stats format
+        const stats: GuildStats[] = guildsData.value.map((g) => ({
+          id: g.id,
+          name: g.name,
+          totalMessages: 0,
+          totalSummaries: 0,
+          totalQuizzes: 0,
+          activeUsers: g.memberCount,
+        }));
+        setGuildStats(stats);
+      }
+    } catch (e) {
+      console.error("Failed to fetch stats:", e);
+    } finally {
+      setLoading(false);
     }
+  }, [token, period]);
 
-    setDailyStats(stats);
-
-    setGuildStats([
-      {
-        id: "1",
-        name: "テストサーバー",
-        totalMessages: 15234,
-        totalSummaries: 342,
-        totalQuizzes: 128,
-        activeUsers: 45,
-      },
-      {
-        id: "2",
-        name: "開発サーバー",
-        totalMessages: 8921,
-        totalSummaries: 156,
-        totalQuizzes: 67,
-        activeUsers: 23,
-      },
-      {
-        id: "3",
-        name: "コミュニティ",
-        totalMessages: 42156,
-        totalSummaries: 891,
-        totalQuizzes: 234,
-        activeUsers: 156,
-      },
-    ]);
-  }, [period]);
+  useEffect(() => {
+    fetchStats();
+  }, [fetchStats]);
 
   if (status === "loading") {
     return (
@@ -99,12 +109,14 @@ export default function StatsPage() {
       summaries: acc.summaries + day.summaries,
       quizzes: acc.quizzes + day.quizzes,
       music: acc.music + day.music,
-      messages: acc.messages + day.messages,
+      total: acc.total + day.total,
     }),
-    { summaries: 0, quizzes: 0, music: 0, messages: 0 }
+    { summaries: 0, quizzes: 0, music: 0, total: 0 }
   );
 
-  const maxValue = Math.max(...dailyStats.map((d) => d.messages));
+  const maxValue = dailyStats.length > 0
+    ? Math.max(...dailyStats.map((d) => d.total))
+    : 1;
 
   return (
     <div className="min-h-screen p-6">
@@ -128,97 +140,113 @@ export default function StatsPage() {
           </div>
         </div>
 
-        {/* 概要カード */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <SummaryCard
-            icon="💬"
-            label="総メッセージ"
-            value={totals.messages.toLocaleString()}
-          />
-          <SummaryCard
-            icon="📝"
-            label="要約生成"
-            value={totals.summaries.toLocaleString()}
-          />
-          <SummaryCard
-            icon="🎮"
-            label="クイズ実行"
-            value={totals.quizzes.toLocaleString()}
-          />
-          <SummaryCard
-            icon="🎵"
-            label="音楽推薦"
-            value={totals.music.toLocaleString()}
-          />
-        </div>
-
-        {/* グラフ */}
-        <div className="card p-6 mb-8">
-          <h2 className="text-xl font-bold mb-6">アクティビティ推移</h2>
-          <div className="h-64 flex items-end gap-1">
-            {dailyStats.map((day, i) => (
-              <div
-                key={i}
-                className="flex-1 flex flex-col items-center gap-1"
-              >
-                <div
-                  className="w-full bg-[#5865f2] rounded-t transition-all hover:bg-[#6875f3]"
-                  style={{ height: `${(day.messages / maxValue) * 100}%` }}
-                  title={`${day.messages} メッセージ`}
-                />
-                {dailyStats.length <= 14 && (
-                  <span className="text-xs text-gray-500 mt-2">{day.date}</span>
-                )}
-              </div>
-            ))}
-          </div>
-          {dailyStats.length > 14 && (
-            <div className="flex justify-between mt-2 text-xs text-gray-500">
-              <span>{dailyStats[0]?.date}</span>
-              <span>{dailyStats[dailyStats.length - 1]?.date}</span>
+        {loading ? (
+          <div className="text-center py-16 text-gray-400">読み込み中...</div>
+        ) : (
+          <>
+            {/* 概要カード */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+              <SummaryCard
+                icon="📊"
+                label="総アクティビティ"
+                value={totals.total.toLocaleString()}
+              />
+              <SummaryCard
+                icon="📝"
+                label="要約生成"
+                value={totals.summaries.toLocaleString()}
+              />
+              <SummaryCard
+                icon="🎮"
+                label="クイズ実行"
+                value={totals.quizzes.toLocaleString()}
+              />
+              <SummaryCard
+                icon="🎵"
+                label="音楽推薦"
+                value={totals.music.toLocaleString()}
+              />
             </div>
-          )}
-        </div>
 
-        {/* サーバー別統計 */}
-        <div className="card p-6">
-          <h2 className="text-xl font-bold mb-6">サーバー別統計</h2>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-[#3a3a3a]">
-                  <th className="text-left py-3 px-4">サーバー</th>
-                  <th className="text-right py-3 px-4">メッセージ</th>
-                  <th className="text-right py-3 px-4">要約</th>
-                  <th className="text-right py-3 px-4">クイズ</th>
-                  <th className="text-right py-3 px-4">アクティブユーザー</th>
-                </tr>
-              </thead>
-              <tbody>
-                {guildStats.map((guild) => (
-                  <tr
-                    key={guild.id}
-                    className="border-b border-[#2a2a2a] hover:bg-[#1a1a1a]"
-                  >
-                    <td className="py-3 px-4 font-medium">{guild.name}</td>
-                    <td className="text-right py-3 px-4 text-gray-300">
-                      {guild.totalMessages.toLocaleString()}
-                    </td>
-                    <td className="text-right py-3 px-4 text-gray-300">
-                      {guild.totalSummaries.toLocaleString()}
-                    </td>
-                    <td className="text-right py-3 px-4 text-gray-300">
-                      {guild.totalQuizzes.toLocaleString()}
-                    </td>
-                    <td className="text-right py-3 px-4 text-gray-300">
-                      {guild.activeUsers.toLocaleString()}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
+            {/* グラフ */}
+            <div className="card p-6 mb-8">
+              <h2 className="text-xl font-bold mb-6">アクティビティ推移</h2>
+              {dailyStats.length === 0 ? (
+                <div className="h-64 flex items-center justify-center text-gray-400">
+                  データがありません
+                </div>
+              ) : (
+                <>
+                  <div className="h-64 flex items-end gap-1">
+                    {dailyStats.map((day, i) => (
+                      <div
+                        key={i}
+                        className="flex-1 flex flex-col items-center gap-1"
+                      >
+                        <div
+                          className="w-full bg-[#5865f2] rounded-t transition-all hover:bg-[#6875f3]"
+                          style={{ height: `${(day.total / maxValue) * 100}%`, minHeight: day.total > 0 ? '4px' : '0' }}
+                          title={`${day.total} アクティビティ`}
+                        />
+                        {dailyStats.length <= 14 && (
+                          <span className="text-xs text-gray-500 mt-2">{day.date}</span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  {dailyStats.length > 14 && (
+                    <div className="flex justify-between mt-2 text-xs text-gray-500">
+                      <span>{dailyStats[0]?.date}</span>
+                      <span>{dailyStats[dailyStats.length - 1]?.date}</span>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+
+            {/* サーバー別統計 */}
+            <div className="card p-6">
+              <h2 className="text-xl font-bold mb-6">サーバー別統計</h2>
+              {guildStats.length === 0 ? (
+                <div className="text-center py-8 text-gray-400">
+                  サーバーが見つかりません
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-[#3a3a3a]">
+                        <th className="text-left py-3 px-4">サーバー</th>
+                        <th className="text-right py-3 px-4">メンバー数</th>
+                        <th className="text-right py-3 px-4">要約</th>
+                        <th className="text-right py-3 px-4">クイズ</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {guildStats.map((guild) => (
+                        <tr
+                          key={guild.id}
+                          className="border-b border-[#2a2a2a] hover:bg-[#1a1a1a]"
+                        >
+                          <td className="py-3 px-4 font-medium">{guild.name}</td>
+                          <td className="text-right py-3 px-4 text-gray-300">
+                            {guild.activeUsers.toLocaleString()}
+                          </td>
+                          <td className="text-right py-3 px-4 text-gray-300">
+                            {guild.totalSummaries.toLocaleString()}
+                          </td>
+                          <td className="text-right py-3 px-4 text-gray-300">
+                            {guild.totalQuizzes.toLocaleString()}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
@@ -242,4 +270,13 @@ function SummaryCard({
       <div className="text-2xl font-bold">{value}</div>
     </div>
   );
+}
+
+function formatDate(dateStr: string): string {
+  try {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString("ja-JP", { month: "short", day: "numeric" });
+  } catch {
+    return dateStr;
+  }
 }
