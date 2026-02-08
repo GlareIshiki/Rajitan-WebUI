@@ -13,6 +13,7 @@ import { ProfileTab } from "@/components/levemagi/ProfileTab";
 import { EisenhowerMatrix } from "@/components/levemagi/EisenhowerMatrix";
 import { XPGainAnimation } from "@/components/levemagi/XPGainAnimation";
 import { GachaResult } from "@/components/levemagi/GachaResult";
+import { ProgressRing } from "@/components/levemagi/ui/ProgressRing";
 import { formatXP } from "@/lib/levemagi/xp";
 import { getAchievementTitle } from "@/lib/levemagi/constants";
 import type { GachaItem } from "@/lib/levemagi/types";
@@ -91,12 +92,11 @@ export default function LeveMagiPage() {
               </div>
             </div>
 
-            {/* レベル表示（ミニ） */}
+            {/* レベル表示（ミニ） — ProgressRing付き */}
             <div className="flex items-center gap-3 bg-card rounded-xl px-4 py-2">
-              <div className="text-center">
-                <div className="text-xs text-muted">Lv</div>
-                <div className="text-lg font-bold text-accent">{level}</div>
-              </div>
+              <ProgressRing percentage={level >= 100 ? 100 : xpProgress.progress} size={40} strokeWidth={3}>
+                <span className="text-xs font-bold text-accent">{level}</span>
+              </ProgressRing>
               <div className="w-px h-8 bg-panel" />
               <div className="text-center">
                 <div className="text-xs text-muted">XP</div>
@@ -115,92 +115,94 @@ export default function LeveMagiPage() {
         </div>
       </div>
 
-      {/* コンテンツ */}
+      {/* コンテンツ — タブ切替アニメーション */}
       <div className="max-w-4xl mx-auto px-4 py-6">
-        {activeTab === "portal" && (
-          <div className="space-y-6">
-            <EisenhowerMatrix nuts={state.nuts} />
-            <PortalTab
-              portals={state.portals}
+        <div key={activeTab} className="animate-slide-in">
+          {activeTab === "portal" && (
+            <div className="space-y-6">
+              <EisenhowerMatrix nuts={state.nuts} />
+              <PortalTab
+                portals={state.portals}
+                nuts={state.nuts}
+                leaves={state.leaves}
+                roots={state.roots}
+                trunks={state.trunks}
+                resources={state.resources}
+                onAdd={addPortal}
+                onUpdate={updatePortal}
+                onDelete={deletePortal}
+              />
+            </div>
+          )}
+
+          {activeTab === "nuts" && (
+            <NutsTab
               nuts={state.nuts}
               leaves={state.leaves}
-              roots={state.roots}
               trunks={state.trunks}
-              resources={state.resources}
-              onAdd={addPortal}
-              onUpdate={updatePortal}
-              onDelete={deletePortal}
+              worklogs={state.worklogs}
+              tags={state.tags}
+              onAdd={addNuts}
+              onUpdate={updateNuts}
+              onDelete={deleteNuts}
+              onStartWork={startWork}
             />
-          </div>
-        )}
+          )}
 
-        {activeTab === "nuts" && (
-          <NutsTab
-            nuts={state.nuts}
-            leaves={state.leaves}
-            trunks={state.trunks}
-            worklogs={state.worklogs}
-            tags={state.tags}
-            onAdd={addNuts}
-            onUpdate={updateNuts}
-            onDelete={deleteNuts}
-            onStartWork={startWork}
-          />
-        )}
+          {activeTab === "task" && (
+            <LeafTab
+              leaves={state.leaves}
+              nuts={state.nuts}
+              onAdd={addLeaf}
+              onStart={startLeaf}
+              onComplete={handleCompleteLeaf}
+              onDelete={deleteLeaf}
+            />
+          )}
 
-        {activeTab === "task" && (
-          <LeafTab
-            leaves={state.leaves}
-            nuts={state.nuts}
-            onAdd={addLeaf}
-            onStart={startLeaf}
-            onComplete={handleCompleteLeaf}
-            onDelete={deleteLeaf}
-          />
-        )}
+          {activeTab === "trunk" && (
+            <TrunkTab
+              trunks={state.trunks}
+              nuts={state.nuts}
+              onAdd={addTrunk}
+              onUpdate={updateTrunk}
+              onDelete={deleteTrunk}
+            />
+          )}
 
-        {activeTab === "trunk" && (
-          <TrunkTab
-            trunks={state.trunks}
-            nuts={state.nuts}
-            onAdd={addTrunk}
-            onUpdate={updateTrunk}
-            onDelete={deleteTrunk}
-          />
-        )}
+          {activeTab === "root" && (
+            <RootTab
+              roots={state.roots}
+              nuts={state.nuts}
+              onAdd={addRoot}
+              onUpdate={updateRoot}
+              onDelete={deleteRoot}
+            />
+          )}
 
-        {activeTab === "root" && (
-          <RootTab
-            roots={state.roots}
-            nuts={state.nuts}
-            onAdd={addRoot}
-            onUpdate={updateRoot}
-            onDelete={deleteRoot}
-          />
-        )}
+          {activeTab === "resource" && (
+            <ResourceTab
+              resources={state.resources}
+              onAdd={addResource}
+              onUpdate={updateResource}
+              onDelete={deleteResource}
+            />
+          )}
 
-        {activeTab === "resource" && (
-          <ResourceTab
-            resources={state.resources}
-            onAdd={addResource}
-            onUpdate={updateResource}
-            onDelete={deleteResource}
-          />
-        )}
-
-        {activeTab === "profile" && (
-          <ProfileTab
-            level={level}
-            totalXP={totalXP}
-            xpProgress={xpProgress}
-            userData={state.userData}
-            leaves={state.leaves}
-            nuts={state.nuts}
-            worklogs={state.worklogs}
-            onGacha={doGacha}
-            onGachaResult={setGachaResult}
-          />
-        )}
+          {activeTab === "profile" && (
+            <ProfileTab
+              level={level}
+              totalXP={totalXP}
+              xpProgress={xpProgress}
+              userData={state.userData}
+              leaves={state.leaves}
+              nuts={state.nuts}
+              worklogs={state.worklogs}
+              onGacha={doGacha}
+              onGachaResult={setGachaResult}
+            />
+          )}
+        </div>
       </div>
 
       {/* XP獲得アニメーション */}

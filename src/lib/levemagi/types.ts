@@ -34,6 +34,8 @@ export interface Nuts {
   tags: string[];
   startDate?: string;
   deadline?: string;
+  icon?: string;
+  imageUrl?: string;
   version?: string;
   publicUrl?: string;
   createdAt: string;

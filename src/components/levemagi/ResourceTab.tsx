@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { Resource, ResourceType } from "@/lib/levemagi/types";
 import { RESOURCE_TYPES } from "@/lib/levemagi/constants";
+import { EmptyState } from "./ui/EmptyState";
 
 interface ResourceTabProps {
   resources: Resource[];
@@ -27,6 +28,13 @@ const TYPE_COLOR: Record<ResourceType, string> = {
   "歌詞": "bg-green-500/20 text-green-400",
 };
 
+const IMAGE_EXTENSIONS = /\.(jpg|jpeg|png|gif|webp|svg|bmp|avif)(\?.*)?$/i;
+
+function isImageUrl(url?: string): boolean {
+  if (!url) return false;
+  return IMAGE_EXTENSIONS.test(url);
+}
+
 export function ResourceTab({ resources, onAdd, onUpdate, onDelete }: ResourceTabProps) {
   const [showForm, setShowForm] = useState(false);
   const [name, setName] = useState("");
@@ -35,6 +43,7 @@ export function ResourceTab({ resources, onAdd, onUpdate, onDelete }: ResourceTa
   const [url, setUrl] = useState("");
   const [tagStr, setTagStr] = useState("");
   const [filter, setFilter] = useState<string>("all");
+  const [viewMode, setViewMode] = useState<"list" | "grid">("list");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,9 +70,20 @@ export function ResourceTab({ resources, onAdd, onUpdate, onDelete }: ResourceTa
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-lg font-bold">リソース ({resources.length})</h2>
-        <button onClick={() => setShowForm(!showForm)} className="btn-primary text-sm">
-          {showForm ? "閉じる" : "+ 追加"}
-        </button>
+        <div className="flex items-center gap-2">
+          {/* 表示切替 */}
+          <div className="flex bg-panel rounded-lg overflow-hidden">
+            <button onClick={() => setViewMode("list")}
+              className={`px-2 py-1 text-sm transition-colors ${viewMode === "list" ? "bg-accent text-white" : "text-muted hover:text-primary"}`}
+              title="リスト表示">☰</button>
+            <button onClick={() => setViewMode("grid")}
+              className={`px-2 py-1 text-sm transition-colors ${viewMode === "grid" ? "bg-accent text-white" : "text-muted hover:text-primary"}`}
+              title="グリッド表示">▦</button>
+          </div>
+          <button onClick={() => setShowForm(!showForm)} className="btn-primary text-sm">
+            {showForm ? "閉じる" : "+ 追加"}
+          </button>
+        </div>
       </div>
 
       {/* タイプフィルタ */}
@@ -81,7 +101,7 @@ export function ResourceTab({ resources, onAdd, onUpdate, onDelete }: ResourceTa
       </div>
 
       {showForm && (
-        <form onSubmit={handleSubmit} className="card p-4 space-y-3">
+        <form onSubmit={handleSubmit} className="card p-4 space-y-3 animate-slide-in">
           <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="リソース名" className="w-full" autoFocus />
           <div className="flex gap-4 flex-wrap">
             <label className="flex items-center gap-2 text-sm text-muted">種類:
@@ -97,33 +117,77 @@ export function ResourceTab({ resources, onAdd, onUpdate, onDelete }: ResourceTa
         </form>
       )}
 
-      <div className="space-y-2">
-        {sorted.length === 0 ? (
-          <div className="card p-8 text-center text-muted">リソースがありません</div>
-        ) : sorted.map((res) => (
-          <div key={res.id} className="card p-4">
-            <div className="flex items-center gap-3">
-              <span className="text-2xl">{TYPE_ICON[res.type]}</span>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-medium text-primary">{res.name}</span>
-                  <span className={`px-2 py-0.5 rounded-full text-xs ${TYPE_COLOR[res.type]}`}>{res.type}</span>
+      {sorted.length === 0 ? (
+        <EmptyState icon="📁" title="リソースがありません" description="素材やリンクを登録しましょう" action={{ label: "+ 追加", onClick: () => setShowForm(true) }} />
+      ) : viewMode === "grid" ? (
+        /* グリッド表示 */
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          {sorted.map((res) => (
+            <div key={res.id} className="card overflow-hidden group">
+              {/* サムネイル */}
+              {isImageUrl(res.url) ? (
+                <div className="aspect-video bg-panel overflow-hidden">
+                  <img src={res.url} alt={res.name} className="w-full h-full object-cover" loading="lazy" />
                 </div>
-                {res.description && <p className="text-sm text-muted mt-0.5">{res.description}</p>}
+              ) : (
+                <div className="aspect-video bg-panel flex items-center justify-center">
+                  <span className="text-4xl opacity-50">{TYPE_ICON[res.type]}</span>
+                </div>
+              )}
+              <div className="p-3">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <span className={`px-1.5 py-0.5 rounded text-[10px] ${TYPE_COLOR[res.type]}`}>{res.type}</span>
+                  <span className="font-medium text-sm text-primary truncate">{res.name}</span>
+                </div>
                 {res.url && (
-                  <a href={res.url} target="_blank" rel="noopener noreferrer" className="text-xs text-accent hover:underline mt-0.5 block truncate">{res.url}</a>
+                  <a href={res.url} target="_blank" rel="noopener noreferrer" className="text-[11px] text-accent hover:underline block truncate">{res.url}</a>
                 )}
                 {res.tags.length > 0 && (
-                  <div className="flex gap-1 flex-wrap mt-1">
-                    {res.tags.map((t, i) => <span key={i} className="px-2 py-0.5 bg-panel rounded text-xs text-muted">#{t}</span>)}
+                  <div className="flex gap-1 flex-wrap mt-1.5">
+                    {res.tags.map((t, i) => <span key={i} className="px-1.5 py-0.5 bg-panel rounded text-[10px] text-muted">#{t}</span>)}
                   </div>
                 )}
               </div>
-              <button onClick={() => onDelete(res.id)} className="flex-shrink-0 text-muted hover:text-red-400 transition-colors text-sm">✕</button>
+              <button onClick={() => onDelete(res.id)}
+                className="absolute top-1 right-1 w-6 h-6 rounded-full bg-black/50 text-white text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">✕</button>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      ) : (
+        /* リスト表示 */
+        <div className="space-y-2">
+          {sorted.map((res) => (
+            <div key={res.id} className="card p-4">
+              <div className="flex items-center gap-3">
+                {/* サムネイル（画像の場合） */}
+                {isImageUrl(res.url) ? (
+                  <div className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 bg-panel">
+                    <img src={res.url} alt={res.name} className="w-full h-full object-cover" loading="lazy" />
+                  </div>
+                ) : (
+                  <span className="text-2xl flex-shrink-0">{TYPE_ICON[res.type]}</span>
+                )}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-medium text-primary">{res.name}</span>
+                    <span className={`px-2 py-0.5 rounded-full text-xs ${TYPE_COLOR[res.type]}`}>{res.type}</span>
+                  </div>
+                  {res.description && <p className="text-sm text-muted mt-0.5">{res.description}</p>}
+                  {res.url && (
+                    <a href={res.url} target="_blank" rel="noopener noreferrer" className="text-xs text-accent hover:underline mt-0.5 block truncate">{res.url}</a>
+                  )}
+                  {res.tags.length > 0 && (
+                    <div className="flex gap-1 flex-wrap mt-1">
+                      {res.tags.map((t, i) => <span key={i} className="px-2 py-0.5 bg-panel rounded text-xs text-muted">#{t}</span>)}
+                    </div>
+                  )}
+                </div>
+                <button onClick={() => onDelete(res.id)} className="flex-shrink-0 text-muted hover:text-red-400 transition-colors text-sm">✕</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

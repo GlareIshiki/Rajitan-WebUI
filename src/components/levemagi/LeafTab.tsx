@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { Leaf, Nuts, DifficultyId } from "@/lib/levemagi/types";
 import { getLeafStatus } from "@/lib/levemagi/types";
 import {
@@ -9,6 +9,7 @@ import {
   PRIORITY_LABELS,
 } from "@/lib/levemagi/constants";
 import { formatXP, formatHours } from "@/lib/levemagi/xp";
+import { EmptyState } from "./ui/EmptyState";
 
 interface LeafTabProps {
   leaves: Leaf[];
@@ -44,10 +45,16 @@ export function LeafTab({ leaves, nuts, onAdd, onStart, onComplete, onDelete }: 
     setTitle("");
   };
 
-  const sorted = [...leaves].sort((a, b) => {
-    const order = { pending: 0, in_progress: 1, completed: 2 };
-    return order[getLeafStatus(a)] - order[getLeafStatus(b)];
-  });
+  // ステータスごとにグループ化
+  const inProgress = leaves.filter((l) => getLeafStatus(l) === "in_progress");
+  const pending = leaves.filter((l) => getLeafStatus(l) === "pending");
+  const completed = leaves.filter((l) => getLeafStatus(l) === "completed");
+
+  const sections = [
+    { key: "in_progress", label: "進行中", emoji: "⚡", items: inProgress, color: "text-accent" },
+    { key: "pending", label: "未着手", emoji: "📋", items: pending, color: "text-muted" },
+    { key: "completed", label: "完了", emoji: "✅", items: completed, color: "text-green-400" },
+  ];
 
   return (
     <div className="space-y-6">
@@ -84,16 +91,55 @@ export function LeafTab({ leaves, nuts, onAdd, onStart, onComplete, onDelete }: 
         </div>
       </form>
 
-      <div className="space-y-2">
-        {sorted.length === 0 ? (
-          <div className="card p-8 text-center text-muted">タスクがありません</div>
-        ) : sorted.map((leaf) => (
-          <LeafItem key={leaf.id} leaf={leaf} linkedNuts={nuts.find((n) => n.id === leaf.nutsId)}
-            onStart={() => onStart(leaf.id)} onComplete={onComplete} onDelete={() => onDelete(leaf.id)} />
-        ))}
-      </div>
+      {leaves.length === 0 ? (
+        <EmptyState icon="🍃" title="タスクがありません" description="上のフォームからタスクを追加しましょう" />
+      ) : (
+        <div className="space-y-6">
+          {sections.map((section) => {
+            if (section.items.length === 0) return null;
+            return (
+              <div key={section.key}>
+                <div className="flex items-center gap-2 mb-3">
+                  <span>{section.emoji}</span>
+                  <span className={`font-bold text-sm ${section.color}`}>{section.label}</span>
+                  <span className="text-xs text-muted">({section.items.length})</span>
+                </div>
+                <div className="space-y-2">
+                  {section.items.map((leaf) => (
+                    <LeafItem key={leaf.id} leaf={leaf} linkedNuts={nuts.find((n) => n.id === leaf.nutsId)}
+                      onStart={() => onStart(leaf.id)} onComplete={onComplete} onDelete={() => onDelete(leaf.id)} />
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
+}
+
+function ElapsedTimer({ startedAt }: { startedAt: string }) {
+  const [elapsed, setElapsed] = useState("");
+
+  useEffect(() => {
+    const update = () => {
+      const ms = Date.now() - new Date(startedAt).getTime();
+      const mins = Math.floor(ms / 60000);
+      if (mins < 60) {
+        setElapsed(`${mins}分`);
+      } else {
+        const h = Math.floor(mins / 60);
+        const m = mins % 60;
+        setElapsed(`${h}時間${m > 0 ? `${m}分` : ""}`);
+      }
+    };
+    update();
+    const interval = setInterval(update, 60000);
+    return () => clearInterval(interval);
+  }, [startedAt]);
+
+  return <span className="text-xs text-accent">{elapsed}経過</span>;
 }
 
 function LeafItem({ leaf, linkedNuts, onStart, onComplete, onDelete }: {
@@ -102,14 +148,15 @@ function LeafItem({ leaf, linkedNuts, onStart, onComplete, onDelete }: {
 }) {
   const [showSeed, setShowSeed] = useState(false);
   const status = getLeafStatus(leaf);
+  const estimate = DIFFICULTY_MASTER[leaf.difficulty].estimateHours;
 
   return (
-    <div className={`card p-4 transition-all ${status === "completed" ? "opacity-60" : ""}`}>
+    <div className={`card p-4 transition-all ${status === "completed" ? "opacity-60" : ""} ${status === "in_progress" ? "animate-border-glow" : ""}`}>
       <div className="flex items-center gap-4">
         <div className="flex-shrink-0">
           {status === "pending" && (
-            <button onClick={onStart} className="w-10 h-10 rounded-full border-2 border-panel hover:border-accent transition-colors flex items-center justify-center">
-              <span className="text-muted">▶</span>
+            <button onClick={onStart} className="w-10 h-10 rounded-full border-2 border-panel hover:border-accent transition-colors flex items-center justify-center group">
+              <span className="text-muted group-hover:text-accent">▶</span>
             </button>
           )}
           {status === "in_progress" && (
@@ -125,6 +172,10 @@ function LeafItem({ leaf, linkedNuts, onStart, onComplete, onDelete }: {
             <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${DIFF_BADGE[leaf.difficulty]}`}>{DIFFICULTY_MASTER[leaf.difficulty].label}</span>
             <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${PRIO_BADGE[leaf.priority]}`}>{PRIORITY_LABELS[leaf.priority]}</span>
             {linkedNuts && <span className="text-xs text-muted">🌰 {linkedNuts.name}</span>}
+            {status === "in_progress" && leaf.startedAt && <ElapsedTimer startedAt={leaf.startedAt} />}
+            {status === "pending" && (
+              <span className="text-xs text-muted opacity-0 group-hover:opacity-100 transition-opacity">~{estimate}h ≈ {formatXP(estimate)} XP</span>
+            )}
           </div>
         </div>
         {status !== "completed" && (
@@ -132,7 +183,7 @@ function LeafItem({ leaf, linkedNuts, onStart, onComplete, onDelete }: {
         )}
       </div>
       {showSeed && (
-        <div className="mt-3 p-3 bg-panel rounded-lg border border-panel">
+        <div className="mt-3 p-3 bg-panel rounded-lg border border-panel animate-slide-in">
           <p className="text-sm mb-2">学びをシードとして記録しますか？</p>
           <div className="flex gap-2">
             <button onClick={() => { onComplete(leaf.id, true); setShowSeed(false); }} className="btn-primary text-sm">シードを作成して完了</button>
@@ -141,13 +192,25 @@ function LeafItem({ leaf, linkedNuts, onStart, onComplete, onDelete }: {
         </div>
       )}
       {status === "completed" && leaf.actualHours != null && leaf.xpSubtotal != null && (
-        <div className="mt-3 p-3 bg-panel rounded-lg text-xs text-muted space-y-1">
-          <div className="flex justify-between"><span>実作業時間</span><span className="text-primary">{formatHours(leaf.actualHours)}</span></div>
-          {(leaf.bonusHours ?? 0) > 0 && (
-            <div className="flex justify-between"><span>早期完了ボーナス</span><span className="text-green-400">+{formatHours(leaf.bonusHours!)}</span></div>
-          )}
+        <div className="mt-3 p-3 bg-panel rounded-lg text-xs space-y-2">
+          {/* 見積vs実績の比較バー */}
+          <div className="space-y-1">
+            <div className="flex justify-between text-muted">
+              <span>見積: {formatHours(estimate)}</span>
+              <span>実績: {formatHours(leaf.actualHours)}</span>
+            </div>
+            <div className="h-2 bg-card rounded-full overflow-hidden flex">
+              <div className="h-full bg-accent rounded-l-full transition-all"
+                style={{ width: `${Math.min((leaf.actualHours / Math.max(estimate, leaf.actualHours)) * 100, 100)}%` }} />
+              {(leaf.bonusHours ?? 0) > 0 && (
+                <div className="h-full bg-green-500 rounded-r-full transition-all"
+                  style={{ width: `${((leaf.bonusHours!) / Math.max(estimate, leaf.actualHours)) * 100}%` }} />
+              )}
+            </div>
+          </div>
           <div className="flex justify-between border-t border-panel pt-1">
-            <span className="font-medium">XP小計</span><span className="text-accent font-bold">{formatXP(leaf.xpSubtotal)} XP</span>
+            <span className="font-medium text-muted">XP小計</span>
+            <span className="text-accent font-bold">{formatXP(leaf.xpSubtotal)} XP</span>
           </div>
         </div>
       )}

@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import type { Trunk, Nuts } from "@/lib/levemagi/types";
-import { TRUNK_TYPE_LABELS, PRIORITY_LABELS } from "@/lib/levemagi/constants";
+import { TRUNK_TYPE_LABELS } from "@/lib/levemagi/constants";
+import { EmptyState } from "./ui/EmptyState";
 
 interface TrunkTabProps {
   trunks: Trunk[];
@@ -21,6 +22,12 @@ const STATUS_LABEL: Record<Trunk["status"], string> = {
   pending: "未着手",
   in_progress: "進行中",
   done: "完了",
+};
+
+const VALUE_BORDER: Record<number, string> = {
+  1: "border-l-blue-500",
+  2: "border-l-yellow-500",
+  3: "border-l-red-500",
 };
 
 const VALUE_BADGE: Record<number, string> = {
@@ -81,7 +88,7 @@ export function TrunkTab({ trunks, nuts, onAdd, onUpdate, onDelete }: TrunkTabPr
       </div>
 
       {showForm && (
-        <form onSubmit={handleSubmit} className="card p-4 space-y-3">
+        <form onSubmit={handleSubmit} className="card p-4 space-y-3 animate-slide-in">
           <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="イシュータイトル" className="w-full" autoFocus />
           <div className="flex gap-4 flex-wrap">
             <label className="flex items-center gap-2 text-sm text-muted">成果物:
@@ -111,7 +118,7 @@ export function TrunkTab({ trunks, nuts, onAdd, onUpdate, onDelete }: TrunkTabPr
 
       <div className="space-y-3">
         {sorted.length === 0 ? (
-          <div className="card p-8 text-center text-muted">イシューがありません</div>
+          <EmptyState icon="🪵" title="イシューがありません" description="課題やアイデアを記録しましょう" action={{ label: "+ 追加", onClick: () => setShowForm(true) }} />
         ) : sorted.map((trunk) => (
           <TrunkItem key={trunk.id} trunk={trunk} linkedNuts={nuts.find((n) => n.id === trunk.nutsId)} onUpdate={onUpdate} onDelete={onDelete} />
         ))}
@@ -136,58 +143,72 @@ function TrunkItem({ trunk, linkedNuts, onUpdate, onDelete }: {
   };
 
   return (
-    <div className="card p-4">
-      <div className="flex items-start gap-3 cursor-pointer" onClick={() => setExpanded(!expanded)}>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-bold text-primary">{trunk.title}</span>
-            <span className={`px-2 py-0.5 rounded-full text-xs ${STATUS_BADGE[trunk.status]}`}>{STATUS_LABEL[trunk.status]}</span>
-            <span className={`px-2 py-0.5 rounded-full text-xs ${VALUE_BADGE[trunk.value]}`}>重要度 {trunk.value}</span>
-            <span className="px-2 py-0.5 rounded-full text-xs bg-panel text-muted">{TRUNK_TYPE_LABELS[trunk.type]}</span>
+    <div className={`card overflow-hidden border-l-4 ${VALUE_BORDER[trunk.value]}`}>
+      <div className="p-4">
+        <div className="flex items-start gap-3 cursor-pointer" onClick={() => setExpanded(!expanded)}>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="font-bold text-primary">{trunk.title}</span>
+              <span className={`px-2 py-0.5 rounded-full text-xs ${STATUS_BADGE[trunk.status]}`}>{STATUS_LABEL[trunk.status]}</span>
+              <span className={`px-2 py-0.5 rounded-full text-xs ${VALUE_BADGE[trunk.value]}`}>重要度 {trunk.value}</span>
+              <span className="px-2 py-0.5 rounded-full text-xs bg-panel text-muted">{TRUNK_TYPE_LABELS[trunk.type]}</span>
+            </div>
+            {linkedNuts && <div className="text-xs text-muted mt-1">🌰 {linkedNuts.name}</div>}
+            {/* What概要（カードフェイス） */}
+            {trunk.what && !expanded && (
+              <p className="text-sm text-muted mt-1 truncate">{trunk.what}</p>
+            )}
           </div>
-          {linkedNuts && <div className="text-xs text-muted mt-1">🌰 {linkedNuts.name}</div>}
+          <span className="text-muted text-sm">{expanded ? "▲" : "▼"}</span>
         </div>
-        <span className="text-muted text-sm">{expanded ? "▲" : "▼"}</span>
-      </div>
 
-      {expanded && (
-        <div className="mt-4 space-y-4 border-t border-panel pt-4">
-          {/* ステータス変更 */}
-          <div className="flex gap-2 flex-wrap">
-            {(["pending", "in_progress", "done"] as const).map((s) => (
-              <button key={s} onClick={() => onUpdate(trunk.id, { status: s })}
-                className={`px-3 py-1 rounded text-xs transition-colors ${trunk.status === s ? "bg-accent text-white" : "bg-panel text-muted hover:text-primary"}`}>
-                {STATUS_LABEL[s]}
-              </button>
-            ))}
-          </div>
+        {expanded && (
+          <div className="mt-4 space-y-4 border-t border-panel pt-4 animate-slide-in">
+            {/* ステータス変更 */}
+            <div className="flex gap-2 flex-wrap">
+              {(["pending", "in_progress", "done"] as const).map((s) => (
+                <button key={s} onClick={() => onUpdate(trunk.id, { status: s })}
+                  className={`px-3 py-1 rounded text-xs transition-colors ${trunk.status === s ? "bg-accent text-white" : "bg-panel text-muted hover:text-primary"}`}>
+                  {STATUS_LABEL[s]}
+                </button>
+              ))}
+            </div>
 
-          {/* What / Idea / Conclusion */}
-          <div className="space-y-3">
-            <div>
-              <label className="text-xs text-muted block mb-1">What（何が問題か）</label>
-              <textarea value={what} onChange={(e) => setWhat(e.target.value)} className="w-full text-sm" rows={2} placeholder="問題の説明..." />
+            {/* What→Idea→Conclusion フロー */}
+            <div className="relative pl-8">
+              {/* 縦線 */}
+              <div className="absolute left-3 top-3 bottom-3 w-0.5 bg-panel" />
+
+              {[
+                { icon: "❓", label: "What（何が問題か）", value: what, setter: setWhat, placeholder: "問題の説明..." },
+                { icon: "💡", label: "Idea（アイデア）", value: idea, setter: setIdea, placeholder: "解決のアイデア..." },
+                { icon: "✅", label: "Conclusion（結論）", value: conclusion, setter: setConclusion, placeholder: "結論・実行内容..." },
+              ].map((step, i) => (
+                <div key={i} className="relative mb-4 last:mb-0">
+                  {/* ステップドット */}
+                  <div className="absolute -left-8 top-2 w-6 h-6 rounded-full bg-panel border-2 border-panel flex items-center justify-center text-xs z-10">
+                    {step.icon}
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted block mb-1">{step.label}</label>
+                    <textarea value={step.value} onChange={(e) => step.setter(e.target.value)} className="w-full text-sm" rows={2} placeholder={step.placeholder} />
+                  </div>
+                </div>
+              ))}
             </div>
-            <div>
-              <label className="text-xs text-muted block mb-1">Idea（アイデア）</label>
-              <textarea value={idea} onChange={(e) => setIdea(e.target.value)} className="w-full text-sm" rows={2} placeholder="解決のアイデア..." />
-            </div>
-            <div>
-              <label className="text-xs text-muted block mb-1">Conclusion（結論）</label>
-              <textarea value={conclusion} onChange={(e) => setConclusion(e.target.value)} className="w-full text-sm" rows={2} placeholder="結論・実行内容..." />
-            </div>
+
             <button onClick={handleSave} className="btn-primary text-sm">保存</button>
+
+            {trunk.tags.length > 0 && (
+              <div className="flex gap-1 flex-wrap">
+                {trunk.tags.map((t, i) => <span key={i} className="px-2 py-0.5 bg-panel rounded text-xs text-muted">#{t}</span>)}
+              </div>
+            )}
+
+            <button onClick={() => onDelete(trunk.id)} className="text-sm text-red-400 hover:underline">削除</button>
           </div>
-
-          {trunk.tags.length > 0 && (
-            <div className="flex gap-1 flex-wrap">
-              {trunk.tags.map((t, i) => <span key={i} className="px-2 py-0.5 bg-panel rounded text-xs text-muted">#{t}</span>)}
-            </div>
-          )}
-
-          <button onClick={() => onDelete(trunk.id)} className="text-sm text-red-400 hover:underline">削除</button>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }
