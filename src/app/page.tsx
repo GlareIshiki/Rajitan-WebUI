@@ -18,23 +18,23 @@ export default function Home() {
     <div className="min-h-screen overflow-hidden transition-colors" style={{ backgroundColor: 'var(--mode-bg)', color: 'var(--mode-text)' }}>
       {/* 背景レイヤー */}
       <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute inset-0" style={{ background: isDark ? 'radial-gradient(ellipse at center, rgba(var(--theme-particle), 0.15) 0%, transparent 70%)' : 'radial-gradient(ellipse at center, rgba(var(--theme-particle), 0.08) 0%, transparent 70%)' }} />
-        <div className="absolute top-[-200px] left-1/2 -translate-x-1/2 w-[800px] h-[800px] rounded-full blur-[200px]" style={{ backgroundColor: isDark ? 'rgba(var(--theme-particle), 0.2)' : 'rgba(var(--theme-particle), 0.1)' }} />
-        <div className="absolute bottom-[-100px] left-[-100px] w-[500px] h-[500px] rounded-full blur-[150px]" style={{ backgroundColor: isDark ? 'rgba(6, 182, 212, 0.15)' : 'rgba(6, 182, 212, 0.08)' }} />
+        <div className="absolute inset-0" style={{ background: isDark ? 'radial-gradient(ellipse at center, rgba(var(--theme-particle), 0.15) 0%, transparent 70%)' : 'radial-gradient(ellipse at center, rgba(var(--theme-particle), 0.12) 0%, transparent 70%)' }} />
+        <div className="absolute top-[-200px] left-1/2 -translate-x-1/2 w-[800px] h-[800px] rounded-full blur-[200px]" style={{ backgroundColor: isDark ? 'rgba(var(--theme-particle), 0.2)' : 'rgba(var(--theme-particle), 0.15)' }} />
+        <div className="absolute bottom-[-100px] left-[-100px] w-[500px] h-[500px] rounded-full blur-[150px]" style={{ backgroundColor: isDark ? 'rgba(6, 182, 212, 0.15)' : 'rgba(6, 182, 212, 0.12)' }} />
 
         {/* 歯車 */}
-        <div className="absolute top-20 left-20" style={{ opacity: isDark ? 0.1 : 0.05 }}>
+        <div className="absolute top-20 left-20" style={{ opacity: isDark ? 0.1 : 0.15 }}>
           <Gear size={150} speed={60} />
         </div>
-        <div className="absolute top-60 right-16" style={{ opacity: isDark ? 0.08 : 0.04 }}>
+        <div className="absolute top-60 right-16" style={{ opacity: isDark ? 0.08 : 0.12 }}>
           <Gear size={100} speed={45} reverse />
         </div>
-        <div className="absolute bottom-40 left-1/4" style={{ opacity: isDark ? 0.06 : 0.03 }}>
+        <div className="absolute bottom-40 left-1/4" style={{ opacity: isDark ? 0.06 : 0.08 }}>
           <Gear size={200} speed={80} />
         </div>
 
         {/* パーティクル */}
-        {mounted && <SparkParticles />}
+        {mounted && <SparkParticles isDark={isDark} />}
       </div>
 
       {/* ヒーローセクション */}
@@ -42,21 +42,45 @@ export default function Home() {
         <div className="text-center z-10 max-w-3xl">
           {/* ロゴ */}
           <div className="relative inline-block mb-6">
-            <div className="absolute inset-0 scale-150 bg-gradient-to-r from-purple-500/30 via-pink-500/20 to-cyan-500/30 rounded-full blur-3xl" />
-            <div className="relative text-[100px] sm:text-[130px] drop-shadow-[0_0_60px_rgba(168,85,247,0.5)]">
+            <div
+              className="absolute inset-0 scale-150 rounded-full blur-3xl"
+              style={{
+                background: isDark
+                  ? 'linear-gradient(to right, rgba(168,85,247,0.3), rgba(236,72,153,0.2), rgba(6,182,212,0.3))'
+                  : 'linear-gradient(to right, rgba(var(--theme-particle),0.2), rgba(236,72,153,0.15), rgba(6,182,212,0.2))',
+              }}
+            />
+            <div
+              className="relative text-[100px] sm:text-[130px]"
+              style={{ filter: isDark ? 'drop-shadow(0 0 60px rgba(168,85,247,0.5))' : 'drop-shadow(0 0 40px rgba(var(--theme-particle),0.3))' }}
+            >
               ⚙️
             </div>
           </div>
 
           {/* タイトル */}
           <h1 className="text-5xl sm:text-7xl font-black mb-4 tracking-tight">
-            <span className="bg-gradient-to-r from-yellow-300 via-pink-400 to-cyan-300 bg-clip-text text-transparent">
+            <span
+              className="bg-clip-text text-transparent"
+              style={{
+                backgroundImage: isDark
+                  ? 'linear-gradient(to right, #fde047, #f472b6, #67e8f9)'
+                  : 'linear-gradient(to right, #b45309, #be185d, #0e7490)',
+              }}
+            >
               RA☆JI☆TAN
             </span>
           </h1>
 
           {/* サブタイトル */}
-          <p className="text-2xl sm:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white via-purple-200 to-white mb-4">
+          <p
+            className="text-2xl sm:text-3xl font-bold bg-clip-text text-transparent mb-4"
+            style={{
+              backgroundImage: isDark
+                ? 'linear-gradient(to right, rgba(255,255,255,0.6), #c4b5fd, rgba(255,255,255,0.6))'
+                : 'linear-gradient(to right, var(--theme-primary), var(--theme-accent), var(--theme-primary))',
+            }}
+          >
             GearSpark☆ 轟け！
           </p>
 
@@ -353,7 +377,7 @@ function Gear({ size, speed, reverse = false }: { size: number; speed: number; r
   );
 }
 
-function SparkParticles() {
+function SparkParticles({ isDark }: { isDark: boolean }) {
   const particles = Array.from({ length: 20 }, (_, i) => ({
     id: i,
     left: Math.random() * 100,
@@ -361,6 +385,8 @@ function SparkParticles() {
     duration: 8 + Math.random() * 8,
     size: 2 + Math.random() * 3,
   }));
+
+  const particleColor = isDark ? '250,204,21' : '180,83,9';
 
   return (
     <>
@@ -372,9 +398,9 @@ function SparkParticles() {
             left: `${p.left}%`,
             width: p.size,
             height: p.size,
-            background: `radial-gradient(circle, rgba(250,204,21,1) 0%, rgba(250,204,21,0) 70%)`,
+            background: `radial-gradient(circle, rgba(${particleColor},${isDark ? 1 : 0.8}) 0%, rgba(${particleColor},0) 70%)`,
             animation: `float-up ${p.duration}s ease-in-out ${p.delay}s infinite`,
-            boxShadow: '0 0 10px rgba(250, 204, 21, 0.6)',
+            boxShadow: `0 0 10px rgba(${particleColor}, ${isDark ? 0.6 : 0.4})`,
           }}
         />
       ))}

@@ -12,9 +12,9 @@ export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const navItems = [
-    { href: "/", label: "ホーム", icon: "🏠" },
     { href: "/dashboard", label: "ダッシュボード", icon: "📊", auth: true },
     { href: "/levemagi", label: "LeveMagi", icon: "🌰" },
+    { href: "/calendar", label: "カレンダー", icon: "📅", auth: true },
     { href: "/settings", label: "設定", icon: "⚙️", auth: true },
     { href: "/stats", label: "統計", icon: "📈", auth: true },
   ];
