@@ -84,12 +84,12 @@ export const modeConfigs: Record<ThemeMode, ModeConfig> = {
     border: "rgba(255, 255, 255, 0.1)",
   },
   light: {
-    bg: "#f8fafc",
-    bgSecondary: "#ffffff",
-    bgCard: "rgba(0, 0, 0, 0.02)",
-    text: "#0f172a",
-    textSecondary: "#64748b",
-    border: "rgba(0, 0, 0, 0.1)",
+    bg: "#f3f1ed",           // 暖かみのあるベージュ系
+    bgSecondary: "#fbfaf8",  // パネル背景（オフホワイト）
+    bgCard: "#ece8e2",       // カード背景（薄いベージュ）
+    text: "#0f1b2d",         // 濃い紺色のテキスト
+    textSecondary: "#4b5a6b", // グレー寄りのサブテキスト
+    border: "#e0dbd3",       // 暖かみのあるボーダー
   },
 };
 
