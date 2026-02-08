@@ -18,19 +18,19 @@ export default function Home() {
     <div className="min-h-screen overflow-hidden transition-colors" style={{ backgroundColor: 'var(--mode-bg)', color: 'var(--mode-text)' }}>
       {/* 背景レイヤー */}
       <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute inset-0" style={{ background: isDark ? 'radial-gradient(ellipse at center, rgba(var(--theme-particle), 0.15) 0%, transparent 70%)' : 'radial-gradient(ellipse at center, rgba(var(--theme-particle), 0.12) 0%, transparent 70%)' }} />
-        <div className="absolute top-[-200px] left-1/2 -translate-x-1/2 w-[800px] h-[800px] rounded-full blur-[200px]" style={{ backgroundColor: isDark ? 'rgba(var(--theme-particle), 0.2)' : 'rgba(var(--theme-particle), 0.15)' }} />
-        <div className="absolute bottom-[-100px] left-[-100px] w-[500px] h-[500px] rounded-full blur-[150px]" style={{ backgroundColor: isDark ? 'rgba(6, 182, 212, 0.15)' : 'rgba(6, 182, 212, 0.12)' }} />
+        <div className="absolute inset-0" style={{ background: isDark ? 'radial-gradient(ellipse at center, rgba(var(--theme-particle), 0.15) 0%, transparent 70%)' : 'radial-gradient(ellipse at center, rgba(var(--theme-particle), 0.08) 0%, transparent 70%)' }} />
+        <div className="absolute top-[-200px] left-1/2 -translate-x-1/2 w-[800px] h-[800px] rounded-full blur-[200px]" style={{ backgroundColor: isDark ? 'rgba(var(--theme-particle), 0.2)' : 'rgba(var(--theme-particle), 0.1)' }} />
+        <div className="absolute bottom-[-100px] left-[-100px] w-[500px] h-[500px] rounded-full blur-[150px]" style={{ backgroundColor: isDark ? 'rgba(6, 182, 212, 0.15)' : 'rgba(147, 197, 253, 0.12)' }} />
 
         {/* 歯車 */}
-        <div className="absolute top-20 left-20" style={{ opacity: isDark ? 0.1 : 0.15 }}>
-          <Gear size={150} speed={60} />
+        <div className="absolute top-20 left-20" style={{ opacity: isDark ? 0.1 : 0.08, filter: isDark ? '' : 'blur(1px)' }}>
+          <Gear size={150} speed={60} isDark={isDark} />
         </div>
-        <div className="absolute top-60 right-16" style={{ opacity: isDark ? 0.08 : 0.12 }}>
-          <Gear size={100} speed={45} reverse />
+        <div className="absolute top-60 right-16" style={{ opacity: isDark ? 0.08 : 0.06, filter: isDark ? '' : 'blur(1px)' }}>
+          <Gear size={100} speed={45} reverse isDark={isDark} />
         </div>
-        <div className="absolute bottom-40 left-1/4" style={{ opacity: isDark ? 0.06 : 0.08 }}>
-          <Gear size={200} speed={80} />
+        <div className="absolute bottom-40 left-1/4" style={{ opacity: isDark ? 0.06 : 0.05, filter: isDark ? '' : 'blur(1.5px)' }}>
+          <Gear size={200} speed={80} isDark={isDark} />
         </div>
 
         {/* パーティクル */}
@@ -47,12 +47,12 @@ export default function Home() {
               style={{
                 background: isDark
                   ? 'linear-gradient(to right, rgba(168,85,247,0.3), rgba(236,72,153,0.2), rgba(6,182,212,0.3))'
-                  : 'linear-gradient(to right, rgba(var(--theme-particle),0.2), rgba(236,72,153,0.15), rgba(6,182,212,0.2))',
+                  : 'linear-gradient(to right, rgba(168,85,247,0.15), rgba(236,72,153,0.12), rgba(147,197,253,0.15))',
               }}
             />
             <div
               className="relative text-[100px] sm:text-[130px]"
-              style={{ filter: isDark ? 'drop-shadow(0 0 60px rgba(168,85,247,0.5))' : 'drop-shadow(0 0 40px rgba(var(--theme-particle),0.3))' }}
+              style={{ filter: isDark ? 'drop-shadow(0 0 60px rgba(168,85,247,0.5))' : 'drop-shadow(0 0 50px rgba(168,85,247,0.15))' }}
             >
               ⚙️
             </div>
@@ -65,7 +65,7 @@ export default function Home() {
               style={{
                 backgroundImage: isDark
                   ? 'linear-gradient(to right, #fde047, #f472b6, #67e8f9)'
-                  : 'linear-gradient(to right, #b45309, #be185d, #0e7490)',
+                  : 'linear-gradient(to right, #a855f7, #ec4899, #38bdf8)',
               }}
             >
               RA☆JI☆TAN
@@ -356,7 +356,7 @@ function FeatureRow({
   );
 }
 
-function Gear({ size, speed, reverse = false }: { size: number; speed: number; reverse?: boolean }) {
+function Gear({ size, speed, reverse = false, isDark = true }: { size: number; speed: number; reverse?: boolean; isDark?: boolean }) {
   return (
     <svg
       width={size}
@@ -364,8 +364,8 @@ function Gear({ size, speed, reverse = false }: { size: number; speed: number; r
       viewBox="0 0 100 100"
       style={{
         animation: `spin ${speed}s linear infinite ${reverse ? 'reverse' : ''}`,
-        filter: 'drop-shadow(0 0 20px var(--theme-glow))',
-        color: 'var(--theme-primary)',
+        filter: isDark ? 'drop-shadow(0 0 20px var(--theme-glow))' : 'drop-shadow(0 0 12px rgba(168,85,247,0.1))',
+        color: isDark ? 'var(--theme-primary)' : 'var(--theme-accent)',
       }}
     >
       <path
@@ -386,7 +386,7 @@ function SparkParticles({ isDark }: { isDark: boolean }) {
     size: 2 + Math.random() * 3,
   }));
 
-  const particleColor = isDark ? '250,204,21' : '180,83,9';
+  const particleColor = isDark ? '250,204,21' : '168,85,247';
 
   return (
     <>
