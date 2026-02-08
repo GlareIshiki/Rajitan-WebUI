@@ -2,39 +2,63 @@
 
 import { useCallback, useMemo } from "react";
 import { useLocalStorage } from "./useLocalStorage";
-import type { LeveMagiState, Nuts, Trunk, Leaf, Root, Tag } from "@/lib/levemagi/types";
-import { getLeafXP } from "@/lib/levemagi/types";
+import type {
+  LeveMagiState,
+  Nuts,
+  Trunk,
+  Leaf,
+  Root,
+  Tag,
+  Portal,
+  Resource,
+  Worklog,
+  NutsStatus,
+} from "@/lib/levemagi/types";
 import {
   STORAGE_KEY,
   DEFAULT_STATE,
   calculateLevel,
   getXPToNextLevel,
   pullGacha,
+  DIFFICULTY_MASTER,
 } from "@/lib/levemagi/constants";
+import {
+  calculateActualHours,
+  calculateBonusHours,
+  calculateTotalXP,
+} from "@/lib/levemagi/xp";
+import { detectPhase } from "@/lib/levemagi/milestones";
+import { migrateState } from "@/lib/levemagi/migration";
 
-// ID生成
 function generateId(): string {
   return Date.now().toString(36) + Math.random().toString(36).slice(2);
 }
 
 export function useLeveMagi() {
-  const [state, setState, isLoaded] = useLocalStorage<LeveMagiState>(STORAGE_KEY, DEFAULT_STATE);
+  const [rawState, setRawState, isLoaded] = useLocalStorage<LeveMagiState>(
+    STORAGE_KEY,
+    DEFAULT_STATE
+  );
+
+  // マイグレーション適用
+  const state = useMemo(() => migrateState(rawState), [rawState]);
+  const setState = useCallback(
+    (updater: LeveMagiState | ((prev: LeveMagiState) => LeveMagiState)) => {
+      if (typeof updater === "function") {
+        setRawState((prev) => updater(migrateState(prev)));
+      } else {
+        setRawState(updater);
+      }
+    },
+    [setRawState]
+  );
 
   // === 派生データ ===
-
-  // 総XP
-  const totalXP = useMemo(() => {
-    return state.leaves.reduce((sum, leaf) => sum + getLeafXP(leaf), 0);
-  }, [state.leaves]);
-
-  // レベル
+  const totalXP = useMemo(() => calculateTotalXP(state.leaves), [state.leaves]);
   const level = useMemo(() => calculateLevel(totalXP), [totalXP]);
-
-  // 次のレベルまでの進捗
   const xpProgress = useMemo(() => getXPToNextLevel(totalXP), [totalXP]);
 
-  // === Nuts（成果物）操作 ===
-
+  // === Nuts 操作 ===
   const addNuts = useCallback(
     (data: Omit<Nuts, "id" | "createdAt">) => {
       const newNuts: Nuts = {
@@ -65,13 +89,51 @@ export function useLeveMagi() {
         nuts: prev.nuts.filter((n) => n.id !== id),
         trunks: prev.trunks.filter((t) => t.nutsId !== id),
         leaves: prev.leaves.filter((l) => l.nutsId !== id),
+        worklogs: prev.worklogs.filter((w) => w.nutsId !== id),
       }));
     },
     [setState]
   );
 
-  // === Trunk（イシュー）操作 ===
+  // 作業開始（ステータス変更 + Worklog生成）
+  const startWork = useCallback(
+    (nutsId: string, newStatus?: NutsStatus) => {
+      setState((prev) => {
+        const nuts = prev.nuts.find((n) => n.id === nutsId);
+        if (!nuts) return prev;
 
+        const phase = detectPhase(nuts.startDate, nuts.deadline, nuts.status);
+        const now = new Date();
+        const worklog: Worklog = {
+          id: generateId(),
+          nutsId,
+          name: `${nuts.name}の作業記録：${now.toLocaleDateString("ja-JP")} ${now.toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit" })}`,
+          startedAt: now.toISOString(),
+          statusSnapshot: nuts.status,
+          phaseSnapshot: phase.label,
+          levelSnapshot: calculateLevel(calculateTotalXP(prev.leaves)),
+          deadlineSnapshot: nuts.deadline,
+        };
+
+        return {
+          ...prev,
+          nuts: prev.nuts.map((n) =>
+            n.id === nutsId
+              ? {
+                  ...n,
+                  status: newStatus || "本作業中",
+                  startDate: n.startDate || now.toISOString(),
+                }
+              : n
+          ),
+          worklogs: [...prev.worklogs, worklog],
+        };
+      });
+    },
+    [setState]
+  );
+
+  // === Trunk 操作 ===
   const addTrunk = useCallback(
     (data: Omit<Trunk, "id" | "createdAt">) => {
       const newTrunk: Trunk = {
@@ -100,14 +162,15 @@ export function useLeveMagi() {
       setState((prev) => ({
         ...prev,
         trunks: prev.trunks.filter((t) => t.id !== id),
-        leaves: prev.leaves.map((l) => (l.trunkId === id ? { ...l, trunkId: undefined } : l)),
+        leaves: prev.leaves.map((l) =>
+          l.trunkId === id ? { ...l, trunkId: undefined } : l
+        ),
       }));
     },
     [setState]
   );
 
-  // === Leaf（タスク）操作 ===
-
+  // === Leaf 操作 ===
   const addLeaf = useCallback(
     (data: Omit<Leaf, "id" | "createdAt">) => {
       const newLeaf: Leaf = {
@@ -138,17 +201,29 @@ export function useLeveMagi() {
       const leaf = state.leaves.find((l) => l.id === id);
       if (!leaf) return null;
 
+      const now = new Date().toISOString();
+      const startedAt = leaf.startedAt || now;
+      const actualHours = calculateActualHours(startedAt, now);
+      const estimate = DIFFICULTY_MASTER[leaf.difficulty].estimateHours;
+      const bonusHours = calculateBonusHours(estimate, actualHours);
+      const xpSubtotal = actualHours + bonusHours;
+
       const prevLevel = level;
-      const xpGained = leaf.difficulty;
 
       setState((prev) => {
         const newLeaves = prev.leaves.map((l) =>
           l.id === id
-            ? { ...l, completedAt: new Date().toISOString(), startedAt: l.startedAt || new Date().toISOString() }
+            ? {
+                ...l,
+                completedAt: now,
+                startedAt: l.startedAt || now,
+                actualHours,
+                bonusHours,
+                xpSubtotal,
+              }
             : l
         );
 
-        // シード自動生成
         let newRoots = prev.roots;
         if (createSeed) {
           const seed: Root = {
@@ -164,8 +239,7 @@ export function useLeveMagi() {
           newRoots = [...prev.roots, seed];
         }
 
-        // レベルアップ判定
-        const newTotalXP = newLeaves.reduce((sum, l) => sum + getLeafXP(l), 0);
+        const newTotalXP = calculateTotalXP(newLeaves);
         const newLevel = calculateLevel(newTotalXP);
         const leveledUp = newLevel > prevLevel;
 
@@ -181,7 +255,7 @@ export function useLeveMagi() {
         };
       });
 
-      return xpGained;
+      return xpSubtotal;
     },
     [setState, state.leaves, level]
   );
@@ -196,8 +270,7 @@ export function useLeveMagi() {
     [setState]
   );
 
-  // === Root（ナレッジ）操作 ===
-
+  // === Root 操作 ===
   const addRoot = useCallback(
     (data: Omit<Root, "id" | "createdAt">) => {
       const newRoot: Root = {
@@ -231,8 +304,82 @@ export function useLeveMagi() {
     [setState]
   );
 
-  // === Tag（タグ）操作 ===
+  // === Portal 操作 ===
+  const addPortal = useCallback(
+    (data: Omit<Portal, "id" | "createdAt">) => {
+      const newPortal: Portal = {
+        ...data,
+        id: generateId(),
+        createdAt: new Date().toISOString(),
+      };
+      setState((prev) => ({ ...prev, portals: [...prev.portals, newPortal] }));
+      return newPortal;
+    },
+    [setState]
+  );
 
+  const updatePortal = useCallback(
+    (id: string, data: Partial<Omit<Portal, "id" | "createdAt">>) => {
+      setState((prev) => ({
+        ...prev,
+        portals: prev.portals.map((p) =>
+          p.id === id ? { ...p, ...data } : p
+        ),
+      }));
+    },
+    [setState]
+  );
+
+  const deletePortal = useCallback(
+    (id: string) => {
+      setState((prev) => ({
+        ...prev,
+        portals: prev.portals.filter((p) => p.id !== id),
+      }));
+    },
+    [setState]
+  );
+
+  // === Resource 操作 ===
+  const addResource = useCallback(
+    (data: Omit<Resource, "id" | "createdAt">) => {
+      const newResource: Resource = {
+        ...data,
+        id: generateId(),
+        createdAt: new Date().toISOString(),
+      };
+      setState((prev) => ({
+        ...prev,
+        resources: [...prev.resources, newResource],
+      }));
+      return newResource;
+    },
+    [setState]
+  );
+
+  const updateResource = useCallback(
+    (id: string, data: Partial<Omit<Resource, "id" | "createdAt">>) => {
+      setState((prev) => ({
+        ...prev,
+        resources: prev.resources.map((r) =>
+          r.id === id ? { ...r, ...data } : r
+        ),
+      }));
+    },
+    [setState]
+  );
+
+  const deleteResource = useCallback(
+    (id: string) => {
+      setState((prev) => ({
+        ...prev,
+        resources: prev.resources.filter((r) => r.id !== id),
+      }));
+    },
+    [setState]
+  );
+
+  // === Tag 操作 ===
   const addTag = useCallback(
     (name: string) => {
       const newTag: Tag = {
@@ -257,12 +404,9 @@ export function useLeveMagi() {
   );
 
   // === ガチャ ===
-
   const doGacha = useCallback(() => {
     if (state.userData.gachaTickets <= 0) return null;
-
     const item = pullGacha();
-
     setState((prev) => ({
       ...prev,
       userData: {
@@ -273,43 +417,44 @@ export function useLeveMagi() {
           : [...prev.userData.collectedItems, item.id],
       },
     }));
-
     return item;
   }, [setState, state.userData.gachaTickets]);
 
   return {
-    // 状態
     state,
     isLoaded,
     totalXP,
     level,
     xpProgress,
-
     // Nuts
     addNuts,
     updateNuts,
     deleteNuts,
-
+    startWork,
     // Trunk
     addTrunk,
     updateTrunk,
     deleteTrunk,
-
     // Leaf
     addLeaf,
     startLeaf,
     completeLeaf,
     deleteLeaf,
-
     // Root
     addRoot,
     updateRoot,
     deleteRoot,
-
+    // Portal
+    addPortal,
+    updatePortal,
+    deletePortal,
+    // Resource
+    addResource,
+    updateResource,
+    deleteResource,
     // Tag
     addTag,
     deleteTag,
-
     // ガチャ
     doGacha,
   };
