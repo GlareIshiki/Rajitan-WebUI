@@ -23,7 +23,8 @@ interface ModeConfig {
   border: string;
 }
 
-export const themeConfigs: Record<ThemeColor, ThemeConfig> = {
+// ダークモード用（ビビッド）
+export const darkThemeConfigs: Record<ThemeColor, ThemeConfig> = {
   purple: {
     primary: "rgb(168, 85, 247)",
     primaryHover: "rgb(147, 51, 234)",
@@ -73,6 +74,61 @@ export const themeConfigs: Record<ThemeColor, ThemeConfig> = {
     particleColor: "244, 63, 94",
   },
 };
+
+// ライトモード用（落ち着いた彩度）
+export const lightThemeConfigs: Record<ThemeColor, ThemeConfig> = {
+  purple: {
+    primary: "rgb(109, 40, 217)",      // より深い紫
+    primaryHover: "rgb(91, 33, 182)",
+    accent: "rgb(139, 92, 246)",
+    glow: "rgba(109, 40, 217, 0.25)",
+    gradient: "from-purple-600 via-pink-600 to-cyan-600",
+    particleColor: "109, 40, 217",
+  },
+  cyan: {
+    primary: "rgb(14, 116, 144)",      // ティール寄り
+    primaryHover: "rgb(17, 94, 122)",
+    accent: "rgb(6, 148, 162)",
+    glow: "rgba(14, 116, 144, 0.25)",
+    gradient: "from-cyan-600 via-blue-600 to-purple-600",
+    particleColor: "14, 116, 144",
+  },
+  pink: {
+    primary: "rgb(190, 24, 93)",       // 深めのピンク
+    primaryHover: "rgb(157, 23, 77)",
+    accent: "rgb(219, 39, 119)",
+    glow: "rgba(190, 24, 93, 0.25)",
+    gradient: "from-pink-600 via-rose-600 to-orange-600",
+    particleColor: "190, 24, 93",
+  },
+  green: {
+    primary: "rgb(21, 128, 61)",       // 森の緑
+    primaryHover: "rgb(22, 101, 52)",
+    accent: "rgb(34, 160, 74)",
+    glow: "rgba(21, 128, 61, 0.25)",
+    gradient: "from-green-600 via-emerald-600 to-cyan-600",
+    particleColor: "21, 128, 61",
+  },
+  amber: {
+    primary: "rgb(180, 83, 9)",        // 琥珀色
+    primaryHover: "rgb(146, 64, 14)",
+    accent: "rgb(217, 119, 6)",
+    glow: "rgba(180, 83, 9, 0.25)",
+    gradient: "from-amber-600 via-orange-600 to-red-600",
+    particleColor: "180, 83, 9",
+  },
+  rose: {
+    primary: "rgb(190, 18, 60)",       // 深紅
+    primaryHover: "rgb(159, 18, 57)",
+    accent: "rgb(225, 29, 72)",
+    glow: "rgba(190, 18, 60, 0.25)",
+    gradient: "from-rose-600 via-red-600 to-orange-600",
+    particleColor: "190, 18, 60",
+  },
+};
+
+// 互換性のためのエイリアス
+export const themeConfigs = darkThemeConfigs;
 
 export const modeConfigs: Record<ThemeMode, ModeConfig> = {
   dark: {
@@ -128,8 +184,8 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       localStorage.setItem("rajitan-theme", theme);
       localStorage.setItem("rajitan-mode", mode);
 
-      // CSS変数を更新
-      const colorConfig = themeConfigs[theme];
+      // CSS変数を更新（モードに応じて色を切り替え）
+      const colorConfig = mode === "dark" ? darkThemeConfigs[theme] : lightThemeConfigs[theme];
       const modeConfig = modeConfigs[mode];
 
       document.documentElement.style.setProperty("--theme-primary", colorConfig.primary);
@@ -155,6 +211,8 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const setMode = (newMode: ThemeMode) => setModeState(newMode);
   const toggleMode = () => setModeState(mode === "dark" ? "light" : "dark");
 
+  const currentColorConfig = mode === "dark" ? darkThemeConfigs[theme] : lightThemeConfigs[theme];
+
   return (
     <ThemeContext.Provider
       value={{
@@ -163,7 +221,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
         setTheme,
         setMode,
         toggleMode,
-        config: themeConfigs[theme],
+        config: currentColorConfig,
         modeConfig: modeConfigs[mode],
         isDark: mode === "dark",
       }}
