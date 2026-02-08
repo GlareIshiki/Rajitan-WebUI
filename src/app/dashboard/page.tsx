@@ -2,8 +2,9 @@
 
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
+import { useTheme } from "@/components/ThemeProvider";
 
 interface BotStats {
   guilds: number;
@@ -23,6 +24,7 @@ interface RecentActivity {
 export default function DashboardPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const { isDark } = useTheme();
   const [botStats, setBotStats] = useState<BotStats | null>(null);
   const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
   const [mounted, setMounted] = useState(false);
@@ -57,10 +59,10 @@ export default function DashboardPage() {
 
   if (status === "loading") {
     return (
-      <div className="min-h-screen bg-[#050508] flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--mode-bg)' }}>
         <div className="text-center">
           <div className="text-6xl mb-4 animate-pulse">⚙️</div>
-          <div className="text-gray-400">読み込み中...</div>
+          <div style={{ color: 'var(--mode-text-secondary)' }}>読み込み中...</div>
         </div>
       </div>
     );
@@ -71,19 +73,19 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#050508] text-white overflow-hidden">
+    <div className="min-h-screen overflow-hidden transition-colors" style={{ backgroundColor: 'var(--mode-bg)', color: 'var(--mode-text)' }}>
       {/* 背景エフェクト */}
       <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(120,50,200,0.15)_0%,_transparent_50%)]" />
-        <div className="absolute top-[-100px] right-[-100px] w-[500px] h-[500px] bg-purple-600/10 rounded-full blur-[150px]" />
-        <div className="absolute bottom-[-100px] left-[-100px] w-[400px] h-[400px] bg-cyan-500/10 rounded-full blur-[120px]" />
+        <div className="absolute inset-0" style={{ background: isDark ? 'radial-gradient(ellipse at top, rgba(var(--theme-particle), 0.15) 0%, transparent 50%)' : 'radial-gradient(ellipse at top, rgba(var(--theme-particle), 0.08) 0%, transparent 50%)' }} />
+        <div className="absolute top-[-100px] right-[-100px] w-[500px] h-[500px] rounded-full blur-[150px]" style={{ backgroundColor: isDark ? 'rgba(var(--theme-particle), 0.1)' : 'rgba(var(--theme-particle), 0.05)' }} />
+        <div className="absolute bottom-[-100px] left-[-100px] w-[400px] h-[400px] rounded-full blur-[120px]" style={{ backgroundColor: isDark ? 'rgba(6, 182, 212, 0.1)' : 'rgba(6, 182, 212, 0.05)' }} />
 
         {/* 歯車 */}
-        <div className="absolute top-20 right-20 opacity-[0.05]">
-          <Gear size={200} speed={80} />
+        <div className="absolute top-20 right-20" style={{ opacity: isDark ? 0.05 : 0.03 }}>
+          <Gear size={200} speed={80} isDark={isDark} />
         </div>
-        <div className="absolute bottom-20 left-20 opacity-[0.03]">
-          <Gear size={150} speed={60} reverse />
+        <div className="absolute bottom-20 left-20" style={{ opacity: isDark ? 0.03 : 0.02 }}>
+          <Gear size={150} speed={60} reverse isDark={isDark} />
         </div>
 
         {/* パーティクル */}
@@ -97,17 +99,17 @@ export default function DashboardPage() {
             <div>
               <div className="flex items-center gap-3 mb-2">
                 <span className="text-4xl">⚙️</span>
-                <h1 className="text-3xl sm:text-4xl font-black bg-gradient-to-r from-white via-purple-200 to-white bg-clip-text text-transparent">
+                <h1 className="text-3xl sm:text-4xl font-black" style={{ color: 'var(--theme-primary)' }}>
                   ダッシュボード
                 </h1>
               </div>
-              <p className="text-gray-400">
+              <p style={{ color: 'var(--mode-text-secondary)' }}>
                 おかえり、{session.user?.name}さん☆
               </p>
             </div>
 
             {/* ユーザー情報 */}
-            <div className="flex items-center gap-3 bg-white/5 backdrop-blur-xl px-4 py-2 rounded-full border border-white/10">
+            <div className="flex items-center gap-3 backdrop-blur-xl px-4 py-2 rounded-full" style={{ backgroundColor: 'var(--mode-bg-card)', border: '1px solid var(--mode-border)' }}>
               {session.user?.image && (
                 <Image
                   src={session.user.image}
@@ -117,34 +119,34 @@ export default function DashboardPage() {
                   className="rounded-full"
                 />
               )}
-              <span className="text-sm text-gray-300">{session.user?.name}</span>
+              <span className="text-sm" style={{ color: 'var(--mode-text-secondary)' }}>{session.user?.name}</span>
             </div>
           </div>
 
           {/* Bot状態バナー */}
           <div className="relative mb-8 overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-r from-green-600/20 via-emerald-600/10 to-cyan-600/20 rounded-2xl" />
-            <div className="absolute inset-[1px] bg-[#0a0a0f]/80 backdrop-blur-xl rounded-2xl" />
+            <div className="absolute inset-[1px] backdrop-blur-xl rounded-2xl" style={{ backgroundColor: isDark ? 'rgba(10, 10, 15, 0.8)' : 'rgba(255, 255, 255, 0.9)' }} />
             <div className="relative p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div className="flex items-center gap-4">
                 <div className="relative">
                   <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center text-3xl shadow-lg shadow-green-500/20">
                     ⚙️
                   </div>
-                  <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 rounded-full border-2 border-[#0a0a0f] animate-pulse" />
+                  <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 rounded-full animate-pulse" style={{ border: `2px solid var(--mode-bg)` }} />
                 </div>
                 <div>
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-xl font-bold">らじたん</span>
+                    <span className="text-xl font-bold" style={{ color: 'var(--mode-text)' }}>らじたん</span>
                     <span className="text-xs px-2 py-0.5 bg-green-500/20 text-green-400 rounded-full border border-green-500/30">
                       オンライン
                     </span>
                   </div>
-                  <p className="text-gray-400 text-sm">正常に動作中 • 自動機能 ON</p>
+                  <p className="text-sm" style={{ color: 'var(--mode-text-secondary)' }}>正常に動作中 • 自動機能 ON</p>
                 </div>
               </div>
               <div className="text-right">
-                <div className="text-sm text-gray-400 mb-1">稼働時間</div>
+                <div className="text-sm mb-1" style={{ color: 'var(--mode-text-secondary)' }}>稼働時間</div>
                 <div className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-cyan-400">
                   {botStats?.uptime ?? "-"}
                 </div>
@@ -240,11 +242,11 @@ function GlassCard({
 }) {
   return (
     <div className="relative group">
-      <div className="absolute -inset-[1px] bg-gradient-to-r from-purple-500/20 via-pink-500/20 to-cyan-500/20 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-sm" />
-      <div className="relative bg-white/[0.03] backdrop-blur-xl rounded-2xl border border-white/10 p-6">
+      <div className="absolute -inset-[1px] rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-sm" style={{ background: 'linear-gradient(to right, rgba(var(--theme-particle), 0.2), rgba(var(--theme-particle), 0.1), rgba(var(--theme-particle), 0.2))' }} />
+      <div className="relative backdrop-blur-xl rounded-2xl p-6" style={{ backgroundColor: 'var(--mode-bg-card)', border: '1px solid var(--mode-border)' }}>
         <div className="flex items-center gap-2 mb-4">
           <span className="text-xl">{icon}</span>
-          <h2 className="text-lg font-bold text-white">{title}</h2>
+          <h2 className="text-lg font-bold" style={{ color: 'var(--mode-text)' }}>{title}</h2>
         </div>
         {children}
       </div>
@@ -314,11 +316,11 @@ function StatCard({
 // アクションボタン
 function ActionButton({ icon, label }: { icon: string; label: string }) {
   return (
-    <button className="group relative overflow-hidden bg-white/5 hover:bg-white/10 border border-white/10 hover:border-purple-500/30 rounded-xl p-4 transition-all duration-300">
-      <div className="absolute inset-0 bg-gradient-to-r from-purple-600/0 via-purple-600/10 to-purple-600/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
+    <button className="group relative overflow-hidden rounded-xl p-4 transition-all duration-300" style={{ backgroundColor: 'var(--mode-bg-secondary)', border: '1px solid var(--mode-border)' }}>
+      <div className="absolute inset-0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" style={{ background: 'linear-gradient(to right, transparent, rgba(var(--theme-particle), 0.1), transparent)' }} />
       <div className="relative text-center">
         <div className="text-2xl mb-2 group-hover:scale-110 transition-transform">{icon}</div>
-        <div className="text-xs text-gray-400 group-hover:text-white transition-colors">{label}</div>
+        <div className="text-xs transition-colors" style={{ color: 'var(--mode-text-secondary)' }}>{label}</div>
       </div>
     </button>
   );
@@ -342,21 +344,21 @@ function ActivityItem({
 
   return (
     <div
-      className="flex items-center justify-between p-4 bg-white/[0.02] hover:bg-white/[0.05] rounded-xl border border-white/5 hover:border-white/10 transition-all group"
-      style={{ animationDelay: `${index * 100}ms` }}
+      className="flex items-center justify-between p-4 rounded-xl transition-all group"
+      style={{ backgroundColor: 'var(--mode-bg-secondary)', border: '1px solid var(--mode-border)', animationDelay: `${index * 100}ms` }}
     >
       <div className="flex items-center gap-4">
-        <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-xl group-hover:scale-110 transition-transform">
+        <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl group-hover:scale-110 transition-transform" style={{ backgroundColor: 'var(--mode-bg-card)' }}>
           {config.icon}
         </div>
         <div>
           <div className={`font-medium ${config.color}`}>{config.label}</div>
-          <div className="text-sm text-gray-500">
+          <div className="text-sm" style={{ color: 'var(--mode-text-secondary)' }}>
             {activity.guild} / #{activity.channel}
           </div>
         </div>
       </div>
-      <div className="text-sm text-gray-600">{activity.timestamp}</div>
+      <div className="text-sm" style={{ color: 'var(--mode-text-secondary)' }}>{activity.timestamp}</div>
     </div>
   );
 }
@@ -368,24 +370,24 @@ function ServerCard({
   server: { name: string; members: number; active: boolean };
 }) {
   return (
-    <div className="group relative bg-white/[0.02] hover:bg-white/[0.05] rounded-xl border border-white/5 hover:border-purple-500/30 p-4 transition-all cursor-pointer">
+    <div className="group relative rounded-xl p-4 transition-all cursor-pointer" style={{ backgroundColor: 'var(--mode-bg-secondary)', border: '1px solid var(--mode-border)' }}>
       <div className="flex items-center gap-3 mb-3">
-        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center text-2xl">
+        <div className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl" style={{ background: 'linear-gradient(135deg, rgba(var(--theme-particle), 0.2), rgba(var(--theme-particle), 0.1))' }}>
           🏠
         </div>
         <div className="flex-1 min-w-0">
-          <div className="font-bold text-white truncate">{server.name}</div>
-          <div className="text-sm text-gray-500">{server.members} メンバー</div>
+          <div className="font-bold truncate" style={{ color: 'var(--mode-text)' }}>{server.name}</div>
+          <div className="text-sm" style={{ color: 'var(--mode-text-secondary)' }}>{server.members} メンバー</div>
         </div>
       </div>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className={`w-2 h-2 rounded-full ${server.active ? "bg-green-500" : "bg-gray-500"}`} />
-          <span className="text-xs text-gray-400">
+          <span className="text-xs" style={{ color: 'var(--mode-text-secondary)' }}>
             {server.active ? "自動機能 ON" : "自動機能 OFF"}
           </span>
         </div>
-        <button className="text-xs text-purple-400 hover:text-purple-300 transition-colors">
+        <button className="text-xs transition-colors" style={{ color: 'var(--theme-primary)' }}>
           設定 →
         </button>
       </div>
@@ -394,22 +396,22 @@ function ServerCard({
 }
 
 // 歯車コンポーネント
-function Gear({ size, speed, reverse = false }: { size: number; speed: number; reverse?: boolean }) {
+function Gear({ size, speed, reverse = false, isDark = true }: { size: number; speed: number; reverse?: boolean; isDark?: boolean }) {
   return (
     <svg
       width={size}
       height={size}
       viewBox="0 0 100 100"
-      className="text-purple-400"
       style={{
         animation: `spin ${speed}s linear infinite ${reverse ? "reverse" : ""}`,
+        color: 'var(--theme-primary)',
       }}
     >
       <path
         fill="currentColor"
         d="M50 10 L55 25 L65 20 L60 35 L75 35 L65 45 L80 50 L65 55 L75 65 L60 65 L65 80 L55 75 L50 90 L45 75 L35 80 L40 65 L25 65 L35 55 L20 50 L35 45 L25 35 L40 35 L35 20 L45 25 Z"
       />
-      <circle cx="50" cy="50" r="15" fill="#050508" />
+      <circle cx="50" cy="50" r="15" style={{ fill: 'var(--mode-bg)' }} />
     </svg>
   );
 }
@@ -434,9 +436,9 @@ function SparkParticles() {
             left: `${p.left}%`,
             width: p.size,
             height: p.size,
-            background: `radial-gradient(circle, rgba(168,85,247,0.8) 0%, rgba(168,85,247,0) 70%)`,
+            background: `radial-gradient(circle, rgba(var(--theme-particle), 0.8) 0%, rgba(var(--theme-particle), 0) 70%)`,
             animation: `float-up ${p.duration}s ease-in-out ${p.delay}s infinite`,
-            boxShadow: "0 0 10px rgba(168, 85, 247, 0.5)",
+            boxShadow: "0 0 10px var(--theme-glow)",
           }}
         />
       ))}

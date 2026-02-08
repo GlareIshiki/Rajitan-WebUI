@@ -3,9 +3,11 @@
 import { useSession, signIn } from "next-auth/react";
 import Link from "next/link";
 import { useEffect, useState, useRef } from "react";
+import { useTheme } from "@/components/ThemeProvider";
 
 export default function Home() {
   const { data: session } = useSession();
+  const { isDark } = useTheme();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -13,21 +15,21 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#050508] overflow-hidden text-white">
+    <div className="min-h-screen overflow-hidden transition-colors" style={{ backgroundColor: 'var(--mode-bg)', color: 'var(--mode-text)' }}>
       {/* 背景レイヤー */}
       <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_rgba(120,50,200,0.15)_0%,_transparent_70%)]" />
-        <div className="absolute top-[-200px] left-1/2 -translate-x-1/2 w-[800px] h-[800px] bg-purple-600/20 rounded-full blur-[200px]" />
-        <div className="absolute bottom-[-100px] left-[-100px] w-[500px] h-[500px] bg-cyan-500/15 rounded-full blur-[150px]" />
+        <div className="absolute inset-0" style={{ background: isDark ? 'radial-gradient(ellipse at center, rgba(var(--theme-particle), 0.15) 0%, transparent 70%)' : 'radial-gradient(ellipse at center, rgba(var(--theme-particle), 0.08) 0%, transparent 70%)' }} />
+        <div className="absolute top-[-200px] left-1/2 -translate-x-1/2 w-[800px] h-[800px] rounded-full blur-[200px]" style={{ backgroundColor: isDark ? 'rgba(var(--theme-particle), 0.2)' : 'rgba(var(--theme-particle), 0.1)' }} />
+        <div className="absolute bottom-[-100px] left-[-100px] w-[500px] h-[500px] rounded-full blur-[150px]" style={{ backgroundColor: isDark ? 'rgba(6, 182, 212, 0.15)' : 'rgba(6, 182, 212, 0.08)' }} />
 
         {/* 歯車 */}
-        <div className="absolute top-20 left-20 opacity-[0.1]">
+        <div className="absolute top-20 left-20" style={{ opacity: isDark ? 0.1 : 0.05 }}>
           <Gear size={150} speed={60} />
         </div>
-        <div className="absolute top-60 right-16 opacity-[0.08]">
+        <div className="absolute top-60 right-16" style={{ opacity: isDark ? 0.08 : 0.04 }}>
           <Gear size={100} speed={45} reverse />
         </div>
-        <div className="absolute bottom-40 left-1/4 opacity-[0.06]">
+        <div className="absolute bottom-40 left-1/4" style={{ opacity: isDark ? 0.06 : 0.03 }}>
           <Gear size={200} speed={80} />
         </div>
 
@@ -59,7 +61,7 @@ export default function Home() {
           </p>
 
           {/* 説明 */}
-          <p className="text-gray-400 text-lg mb-10 max-w-xl mx-auto">
+          <p className="text-lg mb-10 max-w-xl mx-auto" style={{ color: 'var(--mode-text-secondary)' }}>
             会話を読み取り、要約・クイズ・音楽でDiscordを盛り上げるAI Bot
           </p>
 
@@ -68,14 +70,16 @@ export default function Home() {
             {session ? (
               <Link
                 href="/dashboard"
-                className="px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full font-bold text-lg hover:opacity-90 transition-opacity"
+                className="px-8 py-4 rounded-full font-bold text-lg hover:opacity-90 transition-opacity text-white"
+                style={{ backgroundColor: 'var(--theme-primary)' }}
               >
                 ダッシュボードへ
               </Link>
             ) : (
               <button
                 onClick={() => signIn("discord")}
-                className="flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full font-bold text-lg hover:opacity-90 transition-opacity"
+                className="flex items-center gap-3 px-8 py-4 rounded-full font-bold text-lg hover:opacity-90 transition-opacity text-white"
+                style={{ backgroundColor: 'var(--theme-primary)' }}
               >
                 <DiscordIcon />
                 Discordでログイン
@@ -83,7 +87,8 @@ export default function Home() {
             )}
             <a
               href="#features"
-              className="px-8 py-4 border-2 border-white/20 rounded-full font-medium text-gray-300 hover:border-white/40 hover:text-white transition-all"
+              className="px-8 py-4 border-2 rounded-full font-medium transition-all"
+              style={{ borderColor: 'var(--mode-border)', color: 'var(--mode-text-secondary)' }}
             >
               できること見てく？
             </a>
@@ -92,8 +97,8 @@ export default function Home() {
 
         {/* スクロールインジケーター */}
         <div className="absolute bottom-10 left-1/2 -translate-x-1/2">
-          <div className="w-6 h-10 border-2 border-white/20 rounded-full flex justify-center pt-2">
-            <div className="w-1.5 h-3 bg-white/40 rounded-full animate-bounce" />
+          <div className="w-6 h-10 border-2 rounded-full flex justify-center pt-2" style={{ borderColor: 'var(--mode-border)' }}>
+            <div className="w-1.5 h-3 rounded-full animate-bounce" style={{ backgroundColor: 'var(--mode-text-secondary)' }} />
           </div>
         </div>
       </section>
@@ -103,11 +108,11 @@ export default function Home() {
         <div className="max-w-6xl mx-auto">
           <ScrollReveal>
             <div className="text-center mb-20">
-              <p className="text-xs tracking-[0.3em] text-purple-400 uppercase mb-3">Features</p>
-              <h2 className="text-3xl sm:text-4xl font-black text-white">
+              <p className="text-xs tracking-[0.3em] uppercase mb-3" style={{ color: 'var(--theme-primary)' }}>Features</p>
+              <h2 className="text-3xl sm:text-4xl font-black" style={{ color: 'var(--mode-text)' }}>
                 Clockwork Harmony
               </h2>
-              <p className="text-gray-500 mt-2">歯車仕立てのシンフォニー</p>
+              <p className="mt-2" style={{ color: 'var(--mode-text-secondary)' }}>歯車仕立てのシンフォニー</p>
             </div>
           </ScrollReveal>
 
@@ -176,12 +181,12 @@ export default function Home() {
       </section>
 
       {/* コマンドセクション */}
-      <section className="relative py-24 px-6 bg-white/[0.02]">
+      <section className="relative py-24 px-6" style={{ backgroundColor: 'var(--mode-bg-card)' }}>
         <div className="max-w-4xl mx-auto">
           <ScrollReveal>
             <div className="text-center mb-12">
-              <p className="text-xs tracking-[0.3em] text-cyan-400 uppercase mb-3">Commands</p>
-              <h2 className="text-3xl font-black text-white">
+              <p className="text-xs tracking-[0.3em] uppercase mb-3" style={{ color: 'var(--theme-accent)' }}>Commands</p>
+              <h2 className="text-3xl font-black" style={{ color: 'var(--mode-text)' }}>
                 スラッシュコマンド
               </h2>
             </div>
@@ -197,12 +202,12 @@ export default function Home() {
               { cmd: "/status", desc: "Bot状態確認", emoji: "📊" },
             ].map((item, i) => (
               <ScrollReveal key={i} delay={i * 100}>
-                <div className="flex items-center gap-4 bg-black/30 p-4 rounded-xl border border-white/5 hover:border-white/10 transition-all">
+                <div className="flex items-center gap-4 p-4 rounded-xl transition-all" style={{ backgroundColor: 'var(--mode-bg-secondary)', border: '1px solid var(--mode-border)' }}>
                   <span className="text-2xl">{item.emoji}</span>
-                  <code className="px-3 py-1 bg-purple-500/20 rounded-lg text-sm font-mono text-purple-300">
+                  <code className="px-3 py-1 rounded-lg text-sm font-mono" style={{ backgroundColor: 'rgba(var(--theme-particle), 0.2)', color: 'var(--theme-accent)' }}>
                     {item.cmd}
                   </code>
-                  <span className="text-gray-400">{item.desc}</span>
+                  <span style={{ color: 'var(--mode-text-secondary)' }}>{item.desc}</span>
                 </div>
               </ScrollReveal>
             ))}
@@ -215,24 +220,26 @@ export default function Home() {
         <ScrollReveal>
           <div className="max-w-2xl mx-auto text-center">
             <div className="text-6xl mb-6">⚙️✨</div>
-            <h2 className="text-3xl sm:text-4xl font-black text-white mb-4">
+            <h2 className="text-3xl sm:text-4xl font-black mb-4" style={{ color: 'var(--mode-text)' }}>
               始める？
             </h2>
-            <p className="text-gray-400 mb-8">
+            <p className="mb-8" style={{ color: 'var(--mode-text-secondary)' }}>
               わたし、割と有能だから。ふふっ
             </p>
 
           {session ? (
             <Link
               href="/dashboard"
-              className="inline-flex px-10 py-5 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full font-bold text-lg hover:opacity-90 transition-opacity"
+              className="inline-flex px-10 py-5 rounded-full font-bold text-lg hover:opacity-90 transition-opacity text-white"
+              style={{ backgroundColor: 'var(--theme-primary)' }}
             >
               ダッシュボードへ
             </Link>
           ) : (
             <button
               onClick={() => signIn("discord")}
-              className="inline-flex items-center gap-3 px-10 py-5 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full font-bold text-lg hover:opacity-90 transition-opacity"
+              className="inline-flex items-center gap-3 px-10 py-5 rounded-full font-bold text-lg hover:opacity-90 transition-opacity text-white"
+              style={{ backgroundColor: 'var(--theme-primary)' }}
             >
               <DiscordIcon />
               Discordでログイン
@@ -243,12 +250,12 @@ export default function Home() {
       </section>
 
       {/* フッター */}
-      <footer className="relative py-8 px-6 border-t border-white/5">
+      <footer className="relative py-8 px-6" style={{ borderTop: '1px solid var(--mode-border)' }}>
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400 font-bold">
+          <p className="font-bold" style={{ color: 'var(--theme-primary)' }}>
             RA☆JI☆TAN
           </p>
-          <p className="text-gray-600 text-sm">
+          <p className="text-sm" style={{ color: 'var(--mode-text-secondary)' }}>
             © 2024 Rajitan
           </p>
         </div>
@@ -310,8 +317,8 @@ function FeatureRow({
       {/* テキスト（モバイルでは先に表示） */}
       <ScrollReveal direction={reverse ? "left" : "right"} delay={0}>
         <div className="flex-1 text-center lg:text-left order-1 lg:order-none">
-          <h3 className="text-2xl sm:text-3xl font-bold text-white mb-4">{title}</h3>
-          <p className="text-xl text-gray-400">{description}</p>
+          <h3 className="text-2xl sm:text-3xl font-bold mb-4" style={{ color: 'var(--mode-text)' }}>{title}</h3>
+          <p className="text-xl" style={{ color: 'var(--mode-text-secondary)' }}>{description}</p>
         </div>
       </ScrollReveal>
 
@@ -331,17 +338,17 @@ function Gear({ size, speed, reverse = false }: { size: number; speed: number; r
       width={size}
       height={size}
       viewBox="0 0 100 100"
-      className="text-purple-400"
       style={{
         animation: `spin ${speed}s linear infinite ${reverse ? 'reverse' : ''}`,
-        filter: 'drop-shadow(0 0 20px rgba(168, 85, 247, 0.3))',
+        filter: 'drop-shadow(0 0 20px var(--theme-glow))',
+        color: 'var(--theme-primary)',
       }}
     >
       <path
         fill="currentColor"
         d="M50 10 L55 25 L65 20 L60 35 L75 35 L65 45 L80 50 L65 55 L75 65 L60 65 L65 80 L55 75 L50 90 L45 75 L35 80 L40 65 L25 65 L35 55 L20 50 L35 45 L25 35 L40 35 L35 20 L45 25 Z"
       />
-      <circle cx="50" cy="50" r="15" fill="#050508" />
+      <circle cx="50" cy="50" r="15" style={{ fill: 'var(--mode-bg)' }} />
     </svg>
   );
 }
