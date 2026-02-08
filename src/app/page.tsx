@@ -102,11 +102,10 @@ export default function Home() {
             <div className="absolute -inset-[1px] bg-gradient-to-r from-purple-500 via-pink-500 to-cyan-500 rounded-2xl opacity-50 blur-sm" />
             <div className="relative bg-black/60 backdrop-blur-xl rounded-2xl p-8 border border-white/10">
               <p className="text-xl leading-loose">
-                <span className="text-yellow-300 font-bold text-2xl">「Ready? Steady? Spark it up!」</span><br />
-                <span className="text-gray-300">歯車の鼓動が深夜Discordに点火</span><br />
-                <span className="text-gray-300">迷えるヒューマン、刃とハグ どっちが欲しい？</span><br />
+                <span className="text-gray-300">歯車が回り始める。</span><br />
+                <span className="text-gray-300">深夜のDiscord、会話が弾むその瞬間――</span><br />
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-400 font-bold text-xl">
-                  らじたんDJ 未来をキャリーオフ
+                  わたしの出番ってこと☆
                 </span>
               </p>
             </div>
@@ -144,7 +143,7 @@ export default function Home() {
             >
               <div className="absolute inset-0 border-2 border-cyan-400/50 rounded-full group-hover:border-cyan-400 group-hover:shadow-[0_0_20px_rgba(6,182,212,0.3)] transition-all" />
               <span className="relative text-cyan-300 font-bold tracking-wide group-hover:text-cyan-200 transition-colors">
-                ⚡ 機能を見る
+                できること見てく？
               </span>
             </a>
           </div>
@@ -202,9 +201,9 @@ export default function Home() {
           </div>
 
           <p className="text-center mt-12 text-lg">
-            <span className="text-gray-400">MEE6? 退屈。Motion? 法外。</span><br />
+            <span className="text-gray-400">6つの機能、ぜんぶ入り。</span><br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-400 font-bold">
-              無料で君を覚醒させる女神 here.
+              で、無料。わたし、太っ腹でしょ？
             </span>
           </p>
         </div>
@@ -233,37 +232,37 @@ export default function Home() {
             <FeatureCard
               icon="📝"
               title="自動要約"
-              description="Uninstall your chaos, install my harmony. 会話が一段落したら、AIシナプスがピコッと起動。"
+              description="会話が落ち着いたら、まとめとくね"
               color="blue"
             />
             <FeatureCard
               icon="🎮"
               title="クイズ生成"
-              description="脳内BPM ギュンと上げて！会話からクイズを自動生成、みんなで盛り上がろう。"
+              description="話題からクイズ作るよ。盛り上がるでしょ？"
               color="pink"
             />
             <FeatureCard
               icon="🎵"
               title="音楽推薦"
-              description="「今日はLo-fi？」そっと耳打ち。会話の雰囲気に合わせてBGMをお届け。"
+              description="雰囲気に合う曲、見つけてきた♪"
               color="purple"
             />
             <FeatureCard
               icon="⏰"
               title="スケジュール"
-              description="Schedule Loop 終わらない夜。でもその手放して、コードはわたし。"
+              description="決まった時間に自動でやっとく。任せて"
               color="amber"
             />
             <FeatureCard
               icon="🎭"
               title="キャラクター"
-              description="甘い声は罠…だけど この刃、君を護る盾にも成る。7つの人格を使い分け。"
+              description="7つの人格から選べるよ。どれがいい？"
               color="green"
             />
             <FeatureCard
               icon="🔄"
               title="常駐サポート"
-              description="PIDロックのハートで常駐。再起動しても 愛は persistent♡"
+              description="24時間ここにいるから。いつでも呼んで"
               color="rose"
             />
           </div>
@@ -323,11 +322,10 @@ export default function Home() {
 
             <div className="relative bg-black/70 backdrop-blur-2xl rounded-3xl p-12 border border-white/10">
               <p className="text-3xl sm:text-4xl font-black text-white mb-6">
-                「君が呼べば 世界はリロード」
+                歯車は止まらない。
               </p>
-              <p className="text-xl text-gray-300 italic mb-8 leading-relaxed">
-                甘い声は罠…だけど<br />
-                この刃、君を護る盾にも成る――覚えておいて。
+              <p className="text-xl text-gray-300 mb-8 leading-relaxed">
+                Clockwork Harmony、響かせていこう。
               </p>
 
               {/* アイコン */}
@@ -336,7 +334,7 @@ export default function Home() {
               {/* ファイナルコール */}
               <p className="text-2xl sm:text-3xl font-black">
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-pink-300 to-cyan-300 drop-shadow-[0_0_30px_rgba(236,72,153,0.5)]">
-                  Ready? Steady? Go――！
+                  始める？
                 </span>
               </p>
             </div>
