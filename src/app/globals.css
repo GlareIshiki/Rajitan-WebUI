@@ -1,103 +1,236 @@
 @import "tailwindcss";
 
 :root {
-  --background: #0a0a0a;
-  --foreground: #ededed;
-  --primary: #5865f2;
-  --primary-dark: #4752c4;
-  --accent: #eb459e;
-  --success: #57f287;
-  --warning: #fee75c;
-  --danger: #ed4245;
+  font-family: "Yu Gothic UI", "Segoe UI", "Noto Sans JP", sans-serif;
+
+  /* テーマカラー（ThemeProviderで上書きされる） */
+  --theme-primary: rgb(168, 85, 247);
+  --theme-primary-hover: rgb(147, 51, 234);
+  --theme-accent: rgb(192, 132, 252);
+  --theme-glow: rgba(168, 85, 247, 0.5);
+  --theme-particle: 168, 85, 247;
+
+  /* モード（ThemeProviderで上書きされる） */
+  --mode-bg: #050508;
+  --mode-bg-secondary: #0a0a0f;
+  --mode-bg-card: rgba(255, 255, 255, 0.03);
+  --mode-text: #ffffff;
+  --mode-text-secondary: #9ca3af;
+  --mode-border: rgba(255, 255, 255, 0.1);
+
+  /* その他 */
+  --danger: #d94848;
+  --danger-soft: #fde8e8;
+  --success: #22c55e;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: "Segoe UI", "Noto Sans JP", sans-serif;
+  margin: 0;
+  min-height: 100vh;
+  background-color: var(--mode-bg);
+  color: var(--mode-text);
+  transition: background-color 0.3s, color 0.3s;
 }
 
-/* カスタムスクロールバー */
+/* ========================================
+   背景ユーティリティ
+   ======================================== */
+.bg-app {
+  background-color: var(--mode-bg);
+}
+
+.bg-panel {
+  background-color: var(--mode-bg-secondary);
+}
+
+.bg-card {
+  background-color: var(--mode-bg-card);
+}
+
+.bg-accent {
+  background-color: var(--theme-primary);
+}
+
+.bg-accent-hover:hover {
+  background-color: var(--theme-primary-hover);
+}
+
+.bg-accent-soft {
+  background-color: rgba(var(--theme-particle), 0.1);
+}
+
+.bg-danger-soft {
+  background-color: var(--danger-soft);
+}
+
+/* ========================================
+   テキストユーティリティ
+   ======================================== */
+.text-primary {
+  color: var(--mode-text);
+}
+
+.text-muted {
+  color: var(--mode-text-secondary);
+}
+
+.text-accent {
+  color: var(--theme-primary);
+}
+
+.text-danger {
+  color: var(--danger);
+}
+
+/* ========================================
+   ボーダーユーティリティ
+   ======================================== */
+.border-panel {
+  border-color: var(--mode-border);
+}
+
+.border-accent {
+  border-color: var(--theme-primary);
+}
+
+.border-danger {
+  border-color: var(--danger);
+}
+
+/* ========================================
+   ホバー状態
+   ======================================== */
+.hover\:bg-panel:hover {
+  background-color: var(--mode-bg-secondary);
+}
+
+.hover\:bg-card:hover {
+  background-color: var(--mode-bg-card);
+}
+
+.hover\:border-accent:hover {
+  border-color: var(--theme-primary);
+}
+
+.hover\:text-primary:hover {
+  color: var(--mode-text);
+}
+
+.hover\:text-accent:hover {
+  color: var(--theme-primary);
+}
+
+/* ========================================
+   カードコンポーネント
+   ======================================== */
+.card {
+  background-color: var(--mode-bg-card);
+  border: 1px solid var(--mode-border);
+  border-radius: 1rem;
+  backdrop-filter: blur(12px);
+}
+
+.card-hover:hover {
+  border-color: var(--theme-primary);
+  box-shadow: 0 0 20px var(--theme-glow);
+}
+
+/* ========================================
+   ボタンスタイル
+   ======================================== */
+.btn-primary {
+  background-color: var(--theme-primary);
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 9999px;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.btn-primary:hover {
+  background-color: var(--theme-primary-hover);
+  opacity: 0.9;
+}
+
+.btn-secondary {
+  background-color: var(--mode-bg-card);
+  color: var(--mode-text);
+  border: 1px solid var(--mode-border);
+  padding: 0.75rem 1.5rem;
+  border-radius: 9999px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.btn-secondary:hover {
+  border-color: var(--theme-primary);
+  color: var(--theme-primary);
+}
+
+/* ========================================
+   フォーム要素
+   ======================================== */
+input,
+select,
+textarea {
+  background-color: var(--mode-bg-card);
+  border: 1px solid var(--mode-border);
+  color: var(--mode-text);
+  border-radius: 0.75rem;
+  padding: 0.75rem 1rem;
+  transition: border-color 0.2s;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--theme-primary);
+  box-shadow: 0 0 0 3px var(--theme-glow);
+}
+
+/* ========================================
+   スクロールバー
+   ======================================== */
+.scrollbar-themed::-webkit-scrollbar {
+  width: 8px;
+}
+
+.scrollbar-themed::-webkit-scrollbar-track {
+  background: var(--mode-bg-card);
+}
+
+.scrollbar-themed::-webkit-scrollbar-thumb {
+  background: var(--mode-border);
+  border-radius: 8px;
+}
+
+.scrollbar-themed::-webkit-scrollbar-thumb:hover {
+  background: var(--theme-primary);
+}
+
+/* デフォルトスクロールバー */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #1a1a1a;
+  background: var(--mode-bg-secondary);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #404040;
+  background: var(--mode-border);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #505050;
+  background: var(--theme-primary);
 }
 
-/* Discord風カード */
-.card {
-  background: #1e1e1e;
-  border-radius: 8px;
-  border: 1px solid #2a2a2a;
-}
-
-.card-hover:hover {
-  background: #252525;
-  border-color: #3a3a3a;
-}
-
-/* ボタンスタイル */
-.btn-primary {
-  background: var(--primary);
-  color: white;
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  font-weight: 500;
-  transition: background 0.2s;
-}
-
-.btn-primary:hover {
-  background: var(--primary-dark);
-}
-
-.btn-secondary {
-  background: #4f545c;
-  color: white;
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  font-weight: 500;
-  transition: background 0.2s;
-}
-
-.btn-secondary:hover {
-  background: #5d6269;
-}
-
-/* グラデーション */
-.gradient-text {
-  background: linear-gradient(135deg, var(--primary), var(--accent));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-/* アニメーション */
-@keyframes pulse-glow {
-  0%, 100% {
-    box-shadow: 0 0 20px rgba(88, 101, 242, 0.3);
-  }
-  50% {
-    box-shadow: 0 0 40px rgba(88, 101, 242, 0.5);
-  }
-}
-
-.pulse-glow {
-  animation: pulse-glow 2s ease-in-out infinite;
-}
-
-/* 歯車回転アニメーション */
+/* ========================================
+   アニメーション
+   ======================================== */
 @keyframes spin {
   from {
     transform: rotate(0deg);
@@ -105,4 +238,38 @@ body {
   to {
     transform: rotate(360deg);
   }
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 20px var(--theme-glow);
+  }
+  50% {
+    box-shadow: 0 0 40px var(--theme-glow);
+  }
+}
+
+.pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* ========================================
+   グラデーション
+   ======================================== */
+.gradient-text {
+  background: linear-gradient(135deg, var(--theme-primary), var(--theme-accent));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ========================================
+   シャドウ
+   ======================================== */
+.shadow-glow {
+  box-shadow: 0 0 30px var(--theme-glow);
+}
+
+.shadow-glow-sm {
+  box-shadow: 0 0 15px var(--theme-glow);
 }
