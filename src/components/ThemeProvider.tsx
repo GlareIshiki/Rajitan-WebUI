@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 
 export type ThemeColor = "purple" | "cyan" | "pink" | "green" | "amber" | "rose";
+export type ThemeMode = "dark" | "light";
 
 interface ThemeConfig {
   primary: string;
@@ -11,6 +12,15 @@ interface ThemeConfig {
   glow: string;
   gradient: string;
   particleColor: string;
+}
+
+interface ModeConfig {
+  bg: string;
+  bgSecondary: string;
+  bgCard: string;
+  text: string;
+  textSecondary: string;
+  border: string;
 }
 
 export const themeConfigs: Record<ThemeColor, ThemeConfig> = {
@@ -64,45 +74,100 @@ export const themeConfigs: Record<ThemeColor, ThemeConfig> = {
   },
 };
 
+export const modeConfigs: Record<ThemeMode, ModeConfig> = {
+  dark: {
+    bg: "#050508",
+    bgSecondary: "#0a0a0f",
+    bgCard: "rgba(255, 255, 255, 0.03)",
+    text: "#ffffff",
+    textSecondary: "#9ca3af",
+    border: "rgba(255, 255, 255, 0.1)",
+  },
+  light: {
+    bg: "#f8fafc",
+    bgSecondary: "#ffffff",
+    bgCard: "rgba(0, 0, 0, 0.02)",
+    text: "#0f172a",
+    textSecondary: "#64748b",
+    border: "rgba(0, 0, 0, 0.1)",
+  },
+};
+
 interface ThemeContextType {
   theme: ThemeColor;
+  mode: ThemeMode;
   setTheme: (theme: ThemeColor) => void;
+  setMode: (mode: ThemeMode) => void;
+  toggleMode: () => void;
   config: ThemeConfig;
+  modeConfig: ModeConfig;
+  isDark: boolean;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<ThemeColor>("purple");
+  const [mode, setModeState] = useState<ThemeMode>("dark");
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
-    const saved = localStorage.getItem("rajitan-theme") as ThemeColor | null;
-    if (saved && themeConfigs[saved]) {
-      setThemeState(saved);
+    const savedTheme = localStorage.getItem("rajitan-theme") as ThemeColor | null;
+    const savedMode = localStorage.getItem("rajitan-mode") as ThemeMode | null;
+    if (savedTheme && themeConfigs[savedTheme]) {
+      setThemeState(savedTheme);
+    }
+    if (savedMode && modeConfigs[savedMode]) {
+      setModeState(savedMode);
     }
   }, []);
 
   useEffect(() => {
     if (mounted) {
       localStorage.setItem("rajitan-theme", theme);
-      // CSS変数を更新
-      const config = themeConfigs[theme];
-      document.documentElement.style.setProperty("--theme-primary", config.primary);
-      document.documentElement.style.setProperty("--theme-primary-hover", config.primaryHover);
-      document.documentElement.style.setProperty("--theme-accent", config.accent);
-      document.documentElement.style.setProperty("--theme-glow", config.glow);
-      document.documentElement.style.setProperty("--theme-particle", config.particleColor);
-    }
-  }, [theme, mounted]);
+      localStorage.setItem("rajitan-mode", mode);
 
-  const setTheme = (newTheme: ThemeColor) => {
-    setThemeState(newTheme);
-  };
+      // CSS変数を更新
+      const colorConfig = themeConfigs[theme];
+      const modeConfig = modeConfigs[mode];
+
+      document.documentElement.style.setProperty("--theme-primary", colorConfig.primary);
+      document.documentElement.style.setProperty("--theme-primary-hover", colorConfig.primaryHover);
+      document.documentElement.style.setProperty("--theme-accent", colorConfig.accent);
+      document.documentElement.style.setProperty("--theme-glow", colorConfig.glow);
+      document.documentElement.style.setProperty("--theme-particle", colorConfig.particleColor);
+
+      document.documentElement.style.setProperty("--mode-bg", modeConfig.bg);
+      document.documentElement.style.setProperty("--mode-bg-secondary", modeConfig.bgSecondary);
+      document.documentElement.style.setProperty("--mode-bg-card", modeConfig.bgCard);
+      document.documentElement.style.setProperty("--mode-text", modeConfig.text);
+      document.documentElement.style.setProperty("--mode-text-secondary", modeConfig.textSecondary);
+      document.documentElement.style.setProperty("--mode-border", modeConfig.border);
+
+      // body にクラスを追加
+      document.documentElement.classList.remove("dark", "light");
+      document.documentElement.classList.add(mode);
+    }
+  }, [theme, mode, mounted]);
+
+  const setTheme = (newTheme: ThemeColor) => setThemeState(newTheme);
+  const setMode = (newMode: ThemeMode) => setModeState(newMode);
+  const toggleMode = () => setModeState(mode === "dark" ? "light" : "dark");
 
   return (
-    <ThemeContext.Provider value={{ theme, setTheme, config: themeConfigs[theme] }}>
+    <ThemeContext.Provider
+      value={{
+        theme,
+        mode,
+        setTheme,
+        setMode,
+        toggleMode,
+        config: themeConfigs[theme],
+        modeConfig: modeConfigs[mode],
+        isDark: mode === "dark",
+      }}
+    >
       {children}
     </ThemeContext.Provider>
   );

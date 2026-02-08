@@ -3,7 +3,7 @@
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { useTheme, ThemeColor, themeConfigs } from "@/components/ThemeProvider";
+import { useTheme, ThemeColor } from "@/components/ThemeProvider";
 
 interface GuildSettings {
   id: string;
@@ -41,7 +41,7 @@ const THEME_OPTIONS: { id: ThemeColor; name: string; color: string }[] = [
 export default function SettingsPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const { theme, setTheme } = useTheme();
+  const { theme, setTheme, mode, toggleMode, isDark } = useTheme();
   const [guilds, setGuilds] = useState<GuildSettings[]>([]);
   const [selectedGuild, setSelectedGuild] = useState<GuildSettings | null>(null);
   const [saving, setSaving] = useState(false);
@@ -98,51 +98,88 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#050508] text-white p-6">
+    <div className="min-h-screen p-6 transition-colors" style={{ backgroundColor: 'var(--mode-bg)', color: 'var(--mode-text)' }}>
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold mb-8 bg-gradient-to-r from-white via-purple-200 to-white bg-clip-text text-transparent">設定</h1>
+        <h1 className="text-3xl font-bold mb-8" style={{ color: 'var(--theme-primary)' }}>設定</h1>
 
-        {/* テーマ設定 */}
-        <div className="mb-8 bg-white/[0.03] backdrop-blur-xl rounded-2xl border border-white/10 p-6">
-          <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-            <span>🎨</span> カラーテーマ
+        {/* 外観設定 */}
+        <div className="mb-8 backdrop-blur-xl rounded-2xl p-6" style={{ backgroundColor: 'var(--mode-bg-card)', border: '1px solid var(--mode-border)' }}>
+          <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
+            <span>🎨</span> 外観設定
           </h2>
-          <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
-            {THEME_OPTIONS.map((t) => (
+
+          {/* ダーク/ライトモード切り替え */}
+          <div className="mb-6">
+            <h3 className="text-sm font-medium mb-3" style={{ color: 'var(--mode-text-secondary)' }}>モード</h3>
+            <div className="flex gap-3">
               <button
-                key={t.id}
-                onClick={() => setTheme(t.id)}
-                className={`relative p-4 rounded-xl border transition-all ${
-                  theme === t.id
-                    ? "border-white/50 bg-white/10 scale-105"
-                    : "border-white/10 bg-white/[0.02] hover:bg-white/[0.05]"
+                onClick={() => toggleMode()}
+                className={`flex-1 p-4 rounded-xl border transition-all flex items-center justify-center gap-3 ${
+                  isDark
+                    ? "border-[var(--theme-primary)] bg-[var(--theme-primary)]/10"
+                    : ""
                 }`}
+                style={{ borderColor: isDark ? 'var(--theme-primary)' : 'var(--mode-border)', backgroundColor: isDark ? 'var(--theme-primary)' : 'transparent', opacity: isDark ? 0.2 : 1 }}
               >
-                <div className={`w-8 h-8 mx-auto rounded-full ${t.color} mb-2 shadow-lg`} />
-                <div className="text-xs text-center text-gray-300">{t.name}</div>
-                {theme === t.id && (
-                  <div className="absolute top-2 right-2 w-2 h-2 bg-white rounded-full" />
-                )}
+                <span className="text-2xl">🌙</span>
+                <span className="font-medium">ダーク</span>
+                {isDark && <span className="ml-auto text-xs px-2 py-1 rounded-full" style={{ backgroundColor: 'var(--theme-primary)', color: 'white' }}>選択中</span>}
               </button>
-            ))}
+              <button
+                onClick={() => toggleMode()}
+                className={`flex-1 p-4 rounded-xl border transition-all flex items-center justify-center gap-3`}
+                style={{ borderColor: !isDark ? 'var(--theme-primary)' : 'var(--mode-border)', backgroundColor: !isDark ? 'var(--theme-primary)' : 'transparent', opacity: !isDark ? 0.2 : 1 }}
+              >
+                <span className="text-2xl">☀️</span>
+                <span className="font-medium">ライト</span>
+                {!isDark && <span className="ml-auto text-xs px-2 py-1 rounded-full" style={{ backgroundColor: 'var(--theme-primary)', color: 'white' }}>選択中</span>}
+              </button>
+            </div>
+          </div>
+
+          {/* カラーテーマ */}
+          <div>
+            <h3 className="text-sm font-medium mb-3" style={{ color: 'var(--mode-text-secondary)' }}>アクセントカラー</h3>
+            <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
+              {THEME_OPTIONS.map((t) => (
+                <button
+                  key={t.id}
+                  onClick={() => setTheme(t.id)}
+                  className={`relative p-4 rounded-xl border transition-all ${
+                    theme === t.id ? "scale-105" : "hover:scale-102"
+                  }`}
+                  style={{
+                    borderColor: theme === t.id ? 'var(--theme-primary)' : 'var(--mode-border)',
+                    backgroundColor: theme === t.id ? 'var(--theme-primary)' : 'var(--mode-bg-card)',
+                    opacity: theme === t.id ? 0.2 : 1,
+                  }}
+                >
+                  <div className={`w-8 h-8 mx-auto rounded-full ${t.color} mb-2 shadow-lg`} />
+                  <div className="text-xs text-center" style={{ color: 'var(--mode-text-secondary)' }}>{t.name}</div>
+                  {theme === t.id && (
+                    <div className="absolute top-2 right-2 w-2 h-2 rounded-full" style={{ backgroundColor: 'var(--theme-primary)' }} />
+                  )}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
         <div className="grid lg:grid-cols-4 gap-6">
           {/* サーバー一覧 */}
           <div className="lg:col-span-1">
-            <div className="bg-white/[0.03] backdrop-blur-xl rounded-2xl border border-white/10 p-4">
+            <div className="backdrop-blur-xl rounded-2xl p-4" style={{ backgroundColor: 'var(--mode-bg-card)', border: '1px solid var(--mode-border)' }}>
               <h2 className="font-bold mb-4">サーバー一覧</h2>
               <div className="space-y-2">
                 {guilds.map((guild) => (
                   <button
                     key={guild.id}
                     onClick={() => setSelectedGuild(guild)}
-                    className={`w-full text-left p-3 rounded-lg transition-all ${
-                      selectedGuild?.id === guild.id
-                        ? "bg-[var(--theme-primary)] text-white"
-                        : "bg-white/5 hover:bg-white/10"
-                    }`}
+                    className="w-full text-left p-3 rounded-lg transition-all"
+                    style={{
+                      backgroundColor: selectedGuild?.id === guild.id ? 'var(--theme-primary)' : 'var(--mode-bg-card)',
+                      color: selectedGuild?.id === guild.id ? 'white' : 'var(--mode-text)',
+                    }}
                   >
                     {guild.name}
                   </button>
@@ -156,7 +193,7 @@ export default function SettingsPage() {
             {selectedGuild && (
               <>
                 {/* 自動機能設定 */}
-                <div className="bg-white/[0.03] backdrop-blur-xl rounded-2xl border border-white/10 p-6">
+                <div className="backdrop-blur-xl rounded-2xl p-6" style={{ backgroundColor: 'var(--mode-bg-card)', border: '1px solid var(--mode-border)' }}>
                   <h2 className="text-xl font-bold mb-4">自動機能</h2>
                   <div className="space-y-4">
                     <ToggleSetting
@@ -196,7 +233,7 @@ export default function SettingsPage() {
                 </div>
 
                 {/* キャラクター設定 */}
-                <div className="bg-white/[0.03] backdrop-blur-xl rounded-2xl border border-white/10 p-6">
+                <div className="backdrop-blur-xl rounded-2xl p-6" style={{ backgroundColor: 'var(--mode-bg-card)', border: '1px solid var(--mode-border)' }}>
                   <h2 className="text-xl font-bold mb-4">キャラクター</h2>
                   <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
                     {CHARACTER_TYPES.map((char) => (
@@ -205,14 +242,15 @@ export default function SettingsPage() {
                         onClick={() =>
                           setSelectedGuild({ ...selectedGuild, character: char.id })
                         }
-                        className={`p-4 rounded-xl text-left transition-all ${
-                          selectedGuild.character === char.id
-                            ? "bg-[var(--theme-primary)] ring-2 ring-[var(--theme-primary)]"
-                            : "bg-white/5 hover:bg-white/10"
-                        }`}
+                        className="p-4 rounded-xl text-left transition-all"
+                        style={{
+                          backgroundColor: selectedGuild.character === char.id ? 'var(--theme-primary)' : 'var(--mode-bg-card)',
+                          color: selectedGuild.character === char.id ? 'white' : 'var(--mode-text)',
+                          border: selectedGuild.character === char.id ? '2px solid var(--theme-primary)' : '1px solid var(--mode-border)',
+                        }}
                       >
                         <div className="font-medium">{char.name}</div>
-                        <div className="text-sm text-gray-400 mt-1">
+                        <div className="text-sm mt-1" style={{ color: selectedGuild.character === char.id ? 'rgba(255,255,255,0.8)' : 'var(--mode-text-secondary)' }}>
                           {char.description}
                         </div>
                       </button>
@@ -221,7 +259,7 @@ export default function SettingsPage() {
                 </div>
 
                 {/* タイミング設定 */}
-                <div className="bg-white/[0.03] backdrop-blur-xl rounded-2xl border border-white/10 p-6">
+                <div className="backdrop-blur-xl rounded-2xl p-6" style={{ backgroundColor: 'var(--mode-bg-card)', border: '1px solid var(--mode-border)' }}>
                   <h2 className="text-xl font-bold mb-4">タイミング設定</h2>
                   <div className="grid sm:grid-cols-2 gap-6">
                     <div>
@@ -237,7 +275,8 @@ export default function SettingsPage() {
                             summaryInterval: parseInt(e.target.value) || 30,
                           })
                         }
-                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent transition-all"
+                        className="w-full rounded-xl px-4 py-3 focus:ring-2 focus:outline-none transition-all"
+                        style={{ backgroundColor: 'var(--mode-bg-secondary)', border: '1px solid var(--mode-border)', color: 'var(--mode-text)' }}
                       />
                     </div>
                     <div>
@@ -253,7 +292,8 @@ export default function SettingsPage() {
                             quizInterval: parseInt(e.target.value) || 45,
                           })
                         }
-                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent transition-all"
+                        className="w-full rounded-xl px-4 py-3 focus:ring-2 focus:outline-none transition-all"
+                        style={{ backgroundColor: 'var(--mode-bg-secondary)', border: '1px solid var(--mode-border)', color: 'var(--mode-text)' }}
                       />
                     </div>
                   </div>
@@ -290,19 +330,18 @@ function ToggleSetting({
   onChange: (checked: boolean) => void;
 }) {
   return (
-    <div className="flex items-center justify-between p-4 bg-white/5 rounded-xl">
+    <div className="flex items-center justify-between p-4 rounded-xl" style={{ backgroundColor: 'var(--mode-bg-secondary)' }}>
       <div>
-        <div className="font-medium">{label}</div>
-        <div className="text-sm text-gray-400">{description}</div>
+        <div className="font-medium" style={{ color: 'var(--mode-text)' }}>{label}</div>
+        <div className="text-sm" style={{ color: 'var(--mode-text-secondary)' }}>{description}</div>
       </div>
       <button
         onClick={() => onChange(!checked)}
-        className={`relative w-12 h-6 rounded-full transition-colors ${
-          checked ? "bg-[var(--theme-primary)]" : "bg-white/20"
-        }`}
+        className="relative w-12 h-6 rounded-full transition-colors"
+        style={{ backgroundColor: checked ? 'var(--theme-primary)' : 'var(--mode-border)' }}
       >
         <span
-          className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${
+          className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform shadow ${
             checked ? "translate-x-7" : "translate-x-1"
           }`}
         />
