@@ -16,274 +16,174 @@ export default function Home() {
     <div className="min-h-screen bg-[#050508] overflow-hidden text-white">
       {/* 背景レイヤー */}
       <div className="fixed inset-0 pointer-events-none">
-        {/* 放射状グラデーション */}
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_rgba(120,50,200,0.15)_0%,_transparent_70%)]" />
-
-        {/* 光線エフェクト */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[200%] h-[600px] bg-[conic-gradient(from_90deg_at_50%_0%,transparent_0deg,rgba(168,85,247,0.1)_60deg,transparent_120deg,rgba(6,182,212,0.08)_180deg,transparent_240deg,rgba(250,204,21,0.06)_300deg,transparent_360deg)]" />
-
-        {/* 歯車 */}
-        <div className="absolute top-20 left-20 opacity-[0.15]">
-          <Gear size={180} speed={50} />
-        </div>
-        <div className="absolute top-60 right-16 opacity-[0.1]">
-          <Gear size={120} speed={35} reverse />
-        </div>
-        <div className="absolute bottom-40 left-1/4 opacity-[0.08]">
-          <Gear size={250} speed={70} />
-        </div>
-        <div className="absolute bottom-20 right-1/3 opacity-[0.12]">
-          <Gear size={140} speed={40} reverse />
-        </div>
-
-        {/* グロー */}
         <div className="absolute top-[-200px] left-1/2 -translate-x-1/2 w-[800px] h-[800px] bg-purple-600/20 rounded-full blur-[200px]" />
         <div className="absolute bottom-[-100px] left-[-100px] w-[500px] h-[500px] bg-cyan-500/15 rounded-full blur-[150px]" />
-        <div className="absolute top-1/2 right-[-100px] w-[400px] h-[400px] bg-yellow-500/10 rounded-full blur-[120px]" />
+
+        {/* 歯車 */}
+        <div className="absolute top-20 left-20 opacity-[0.1]">
+          <Gear size={150} speed={60} />
+        </div>
+        <div className="absolute top-60 right-16 opacity-[0.08]">
+          <Gear size={100} speed={45} reverse />
+        </div>
+        <div className="absolute bottom-40 left-1/4 opacity-[0.06]">
+          <Gear size={200} speed={80} />
+        </div>
 
         {/* パーティクル */}
         {mounted && <SparkParticles />}
-
-        {/* グリッドライン */}
-        <div
-          className="absolute inset-0 opacity-[0.02]"
-          style={{
-            backgroundImage: `linear-gradient(rgba(168,85,247,0.5) 1px, transparent 1px),
-                              linear-gradient(90deg, rgba(168,85,247,0.5) 1px, transparent 1px)`,
-            backgroundSize: '100px 100px'
-          }}
-        />
       </div>
 
       {/* ヒーローセクション */}
       <section className="relative min-h-screen flex items-center justify-center px-6">
-        {/* コンテンツ */}
-        <div className="text-center z-10 max-w-4xl">
-          {/* ロゴエリア */}
-          <div className="relative inline-block mb-8">
-            {/* グロー背景 */}
-            <div className="absolute inset-0 scale-150 bg-gradient-to-r from-purple-500/30 via-pink-500/20 to-cyan-500/30 rounded-full blur-3xl animate-pulse-slow" />
-
-            {/* メインアイコン */}
-            <div className="relative">
-              <div className="text-[120px] sm:text-[150px] drop-shadow-[0_0_60px_rgba(168,85,247,0.5)] animate-float">
-                ⚙️
-              </div>
-              {/* 周囲のエフェクト */}
-              <div className="absolute -top-4 -right-4 text-4xl animate-twinkle">✨</div>
-              <div className="absolute -bottom-2 -left-6 text-3xl animate-twinkle-delay">⚡</div>
-              <div className="absolute top-1/2 -right-8 text-2xl animate-float-delay">💫</div>
+        <div className="text-center z-10 max-w-3xl">
+          {/* ロゴ */}
+          <div className="relative inline-block mb-6">
+            <div className="absolute inset-0 scale-150 bg-gradient-to-r from-purple-500/30 via-pink-500/20 to-cyan-500/30 rounded-full blur-3xl" />
+            <div className="relative text-[100px] sm:text-[130px] drop-shadow-[0_0_60px_rgba(168,85,247,0.5)]">
+              ⚙️
             </div>
           </div>
 
           {/* タイトル */}
-          <h1 className="text-6xl sm:text-8xl font-black mb-6 tracking-tight leading-none">
-            <span
-              className="bg-gradient-to-r from-yellow-300 via-pink-400 to-cyan-300 bg-clip-text text-transparent drop-shadow-[0_0_40px_rgba(236,72,153,0.5)]"
-              style={{ textShadow: '0 0 80px rgba(236,72,153,0.3)' }}
-            >
+          <h1 className="text-5xl sm:text-7xl font-black mb-4 tracking-tight">
+            <span className="bg-gradient-to-r from-yellow-300 via-pink-400 to-cyan-300 bg-clip-text text-transparent">
               RA☆JI☆TAN
             </span>
           </h1>
 
           {/* サブタイトル */}
-          <div className="mb-6">
-            <p className="text-3xl sm:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-purple-200 to-white mb-2">
-              GearSpark☆ 轟け！
-            </p>
-            <p className="text-lg text-cyan-300/80 font-mono tracking-widest">
-              Clock&apos;s screaming &quot;TICK!&quot; Heart&apos;s shouting &quot;BOOM!&quot;
-            </p>
-          </div>
+          <p className="text-2xl sm:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white via-purple-200 to-white mb-4">
+            GearSpark☆ 轟け！
+          </p>
 
-          {/* イントロボックス */}
-          <div className="relative mb-10">
-            {/* ボーダーグロー */}
-            <div className="absolute -inset-[1px] bg-gradient-to-r from-purple-500 via-pink-500 to-cyan-500 rounded-2xl opacity-50 blur-sm" />
-            <div className="relative bg-black/60 backdrop-blur-xl rounded-2xl p-8 border border-white/10">
-              <p className="text-xl leading-loose">
-                <span className="text-gray-300">歯車が回り始める。</span><br />
-                <span className="text-gray-300">深夜のDiscord、会話が弾むその瞬間――</span><br />
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-400 font-bold text-xl">
-                  わたしの出番ってこと☆
-                </span>
-              </p>
-            </div>
-          </div>
+          {/* 説明 */}
+          <p className="text-gray-400 text-lg mb-10 max-w-xl mx-auto">
+            会話を読み取り、要約・クイズ・音楽でDiscordを盛り上げるAI Bot
+          </p>
 
           {/* CTAボタン */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             {session ? (
               <Link
                 href="/dashboard"
-                className="group relative px-10 py-5"
+                className="px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full font-bold text-lg hover:opacity-90 transition-opacity"
               >
-                <div className="absolute inset-0 bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600 rounded-full blur group-hover:blur-md transition-all" />
-                <div className="absolute inset-0 bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600 rounded-full" />
-                <span className="relative font-bold text-lg tracking-wide">
-                  🎛️ ダッシュボードへ
-                </span>
+                ダッシュボードへ
               </Link>
             ) : (
               <button
                 onClick={() => signIn("discord")}
-                className="group relative px-10 py-5"
+                className="flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full font-bold text-lg hover:opacity-90 transition-opacity"
               >
-                <div className="absolute inset-0 bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600 rounded-full blur group-hover:blur-md transition-all" />
-                <div className="absolute inset-0 bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600 rounded-full" />
-                <span className="relative font-bold text-lg tracking-wide flex items-center gap-3">
-                  <DiscordIcon />
-                  Discordでログイン
-                </span>
+                <DiscordIcon />
+                Discordでログイン
               </button>
             )}
             <a
               href="#features"
-              className="group px-8 py-4 relative"
+              className="px-8 py-4 border-2 border-white/20 rounded-full font-medium text-gray-300 hover:border-white/40 hover:text-white transition-all"
             >
-              <div className="absolute inset-0 border-2 border-cyan-400/50 rounded-full group-hover:border-cyan-400 group-hover:shadow-[0_0_20px_rgba(6,182,212,0.3)] transition-all" />
-              <span className="relative text-cyan-300 font-bold tracking-wide group-hover:text-cyan-200 transition-colors">
-                できること見てく？
-              </span>
+              できること見てく？
             </a>
           </div>
         </div>
 
         {/* スクロールインジケーター */}
-        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2">
-          <span className="text-xs text-gray-500 tracking-widest uppercase">Scroll</span>
-          <div className="w-6 h-10 border-2 border-purple-500/50 rounded-full flex justify-center pt-2">
-            <div className="w-1.5 h-3 bg-purple-400 rounded-full animate-scroll" />
+        <div className="absolute bottom-10 left-1/2 -translate-x-1/2">
+          <div className="w-6 h-10 border-2 border-white/20 rounded-full flex justify-center pt-2">
+            <div className="w-1.5 h-3 bg-white/40 rounded-full animate-bounce" />
           </div>
         </div>
       </section>
 
-      {/* RAP MODE セクション */}
-      <section className="relative py-32 px-6 overflow-hidden">
-        {/* 背景エフェクト */}
-        <div className="absolute inset-0 bg-gradient-to-b from-purple-900/10 via-transparent to-cyan-900/10" />
-        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-purple-500/50 to-transparent" />
-
-        <div className="max-w-5xl mx-auto relative z-10">
-          {/* セクションタイトル */}
-          <div className="text-center mb-16">
-            <div className="inline-block px-4 py-1 bg-yellow-500/20 rounded-full border border-yellow-500/30 mb-4">
-              <span className="text-xs tracking-[0.3em] text-yellow-300 uppercase font-bold">🎤 Rap Mode</span>
-            </div>
-            <h2 className="text-4xl sm:text-5xl font-black">
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-white to-yellow-300">
-                ALL-IN-ONE, NO RIVAL ZONE!
-              </span>
-            </h2>
-          </div>
-
-          {/* カードグリッド */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 sm:gap-6">
-            {[
-              { num: "01", text: "Chat with soul", icon: "💬", color: "from-blue-500 to-cyan-500" },
-              { num: "02", text: "Schedule control", icon: "📅", color: "from-purple-500 to-pink-500" },
-              { num: "03", text: "Quiz patrol", icon: "🎮", color: "from-green-500 to-emerald-500" },
-              { num: "04", text: "Music roll", icon: "🎵", color: "from-pink-500 to-rose-500" },
-              { num: "05", text: "Summarize goal", icon: "📝", color: "from-amber-500 to-orange-500" },
-              { num: "06", text: "Reddit scroll", icon: "🌐", color: "from-cyan-500 to-blue-500" },
-            ].map((item, i) => (
-              <div key={i} className="group relative">
-                {/* グローエフェクト */}
-                <div className={`absolute -inset-0.5 bg-gradient-to-r ${item.color} rounded-2xl opacity-0 group-hover:opacity-50 blur transition-all duration-300`} />
-
-                <div className="relative bg-black/40 backdrop-blur-xl p-6 rounded-2xl border border-white/10 group-hover:border-white/20 transition-all">
-                  <div className="text-4xl mb-3 group-hover:scale-110 transition-transform">{item.icon}</div>
-                  <div className="text-[10px] text-gray-600 font-mono mb-1">{item.num}</div>
-                  <div className="text-sm sm:text-base font-bold text-white">{item.text}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <p className="text-center mt-12 text-lg">
-            <span className="text-gray-400">6つの機能、ぜんぶ入り。</span><br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-400 font-bold">
-              で、無料。わたし、太っ腹でしょ？
-            </span>
-          </p>
-        </div>
-      </section>
-
-      {/* 機能紹介 */}
-      <section id="features" className="relative py-32 px-6">
-        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-500/50 to-transparent" />
-
+      {/* 機能セクション */}
+      <section id="features" className="relative py-24 px-6">
         <div className="max-w-6xl mx-auto">
-          {/* セクションタイトル */}
           <div className="text-center mb-20">
-            <div className="inline-block px-4 py-1 bg-cyan-500/20 rounded-full border border-cyan-500/30 mb-4">
-              <span className="text-xs tracking-[0.3em] text-cyan-300 uppercase font-bold">⚙️ Features</span>
-            </div>
-            <h2 className="text-4xl sm:text-5xl font-black mb-4">
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-purple-300 to-cyan-300">
-                Clockwork Harmony
-              </span>
+            <p className="text-xs tracking-[0.3em] text-purple-400 uppercase mb-3">Features</p>
+            <h2 className="text-3xl sm:text-4xl font-black text-white">
+              Clockwork Harmony
             </h2>
-            <p className="text-gray-400 text-lg">歯車仕立てのシンフォニー</p>
+            <p className="text-gray-500 mt-2">歯車仕立てのシンフォニー</p>
           </div>
 
-          {/* 機能カード */}
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <FeatureCard
-              icon="📝"
+          <div className="space-y-24">
+            {/* 自動要約 */}
+            <FeatureRow
+              reverse={false}
               title="自動要約"
               description="会話が落ち着いたら、まとめとくね"
-              color="blue"
+              mockMessage={{
+                content: "📝 **会話のまとめ**\n\n今日の話題:\n• 新作ゲームの話で盛り上がった\n• 週末の予定を決めた\n• おすすめの映画を共有した\n\n参加者: 5人 | メッセージ: 42件",
+              }}
             />
-            <FeatureCard
-              icon="🎮"
+
+            {/* クイズ生成 */}
+            <FeatureRow
+              reverse={true}
               title="クイズ生成"
               description="話題からクイズ作るよ。盛り上がるでしょ？"
-              color="pink"
+              mockMessage={{
+                content: "🎮 **クイズタイム！**\n\nさっきの話題から出題するよ〜\n\n**Q. この中で、今日話題に出た映画はどれ？**\n\n1️⃣ インターステラー\n2️⃣ マトリックス\n3️⃣ インセプション\n4️⃣ テネット",
+              }}
             />
-            <FeatureCard
-              icon="🎵"
+
+            {/* 音楽推薦 */}
+            <FeatureRow
+              reverse={false}
               title="音楽推薦"
               description="雰囲気に合う曲、見つけてきた♪"
-              color="purple"
+              mockMessage={{
+                content: "🎵 **今の雰囲気にぴったりの曲**\n\n夜更かしトークに合いそう！\n\n**Midnight City - M83**\n🔗 YouTube | Spotify\n\n気に入った？ 👍 👎",
+              }}
             />
-            <FeatureCard
-              icon="⏰"
+
+            {/* スケジュール */}
+            <FeatureRow
+              reverse={true}
               title="スケジュール"
               description="決まった時間に自動でやっとく。任せて"
-              color="amber"
+              mockMessage={{
+                content: "⏰ **定期レポート**\n\n毎週日曜 21:00 に自動投稿中\n\n今週の統計:\n• 総メッセージ: 1,234件\n• アクティブユーザー: 28人\n• 一番盛り上がった日: 金曜日",
+              }}
             />
-            <FeatureCard
-              icon="🎭"
+
+            {/* キャラクター */}
+            <FeatureRow
+              reverse={false}
               title="キャラクター"
               description="7つの人格から選べるよ。どれがいい？"
-              color="green"
+              mockMessage={{
+                content: "🎭 **キャラクター設定**\n\n現在: **元気系DJ**\n\n選べるタイプ:\n• 元気系DJ（現在）\n• クール系\n• 癒し系\n• ツンデレ\n• 知的系\n• ミステリアス\n• カオス",
+              }}
             />
-            <FeatureCard
-              icon="🔄"
+
+            {/* 常駐サポート */}
+            <FeatureRow
+              reverse={true}
               title="常駐サポート"
               description="24時間ここにいるから。いつでも呼んで"
-              color="rose"
+              mockMessage={{
+                content: "🔄 **ステータス**\n\n✅ オンライン\n⏱️ 稼働時間: 7日 12時間\n📊 今日の対応: 156件\n\n何かあったら @らじたん で呼んでね！",
+              }}
             />
           </div>
         </div>
       </section>
 
       {/* コマンドセクション */}
-      <section className="relative py-32 px-6">
-        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-purple-500/50 to-transparent" />
-
+      <section className="relative py-24 px-6 bg-white/[0.02]">
         <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-16">
-            <div className="inline-block px-4 py-1 bg-purple-500/20 rounded-full border border-purple-500/30 mb-4">
-              <span className="text-xs tracking-[0.3em] text-purple-300 uppercase font-bold">⚡ Commands</span>
-            </div>
-            <h2 className="text-4xl font-black text-white">
-              One-click Magic
+          <div className="text-center mb-12">
+            <p className="text-xs tracking-[0.3em] text-cyan-400 uppercase mb-3">Commands</p>
+            <h2 className="text-3xl font-black text-white">
+              スラッシュコマンド
             </h2>
           </div>
 
-          <div className="grid sm:grid-cols-2 gap-4">
+          <div className="grid sm:grid-cols-2 gap-3">
             {[
               { cmd: "/setup", desc: "キャラクター設定", emoji: "🎭" },
               { cmd: "/chat", desc: "プライベートチャット", emoji: "💬" },
@@ -294,104 +194,124 @@ export default function Home() {
             ].map((item, i) => (
               <div
                 key={i}
-                className="group flex items-center gap-4 bg-black/30 backdrop-blur-xl p-5 rounded-xl border border-white/10 hover:border-purple-500/50 hover:bg-purple-500/5 transition-all"
+                className="flex items-center gap-4 bg-black/30 p-4 rounded-xl border border-white/5 hover:border-white/10 transition-all"
               >
-                <span className="text-2xl group-hover:scale-110 transition-transform">{item.emoji}</span>
-                <code className="px-4 py-2 bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-lg text-base font-mono text-purple-200 border border-purple-500/30">
+                <span className="text-2xl">{item.emoji}</span>
+                <code className="px-3 py-1 bg-purple-500/20 rounded-lg text-sm font-mono text-purple-300">
                   {item.cmd}
                 </code>
-                <span className="text-gray-300">{item.desc}</span>
+                <span className="text-gray-400">{item.desc}</span>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ブレイクダウン（クライマックス） */}
+      {/* CTAセクション */}
       <section className="relative py-32 px-6">
-        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-pink-500/50 to-transparent" />
+        <div className="max-w-2xl mx-auto text-center">
+          <div className="text-6xl mb-6">⚙️✨</div>
+          <h2 className="text-3xl sm:text-4xl font-black text-white mb-4">
+            始める？
+          </h2>
+          <p className="text-gray-400 mb-8">
+            わたし、割と有能だから。ふふっ
+          </p>
 
-        {/* 背景エフェクト */}
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_rgba(236,72,153,0.1)_0%,_transparent_60%)]" />
-
-        <div className="max-w-3xl mx-auto text-center relative z-10">
-          {/* グローボックス */}
-          <div className="relative">
-            <div className="absolute -inset-4 bg-gradient-to-r from-purple-600/30 via-pink-600/30 to-cyan-600/30 rounded-[40px] blur-2xl" />
-            <div className="absolute -inset-[1px] bg-gradient-to-r from-purple-500 via-pink-500 to-cyan-500 rounded-3xl opacity-30" />
-
-            <div className="relative bg-black/70 backdrop-blur-2xl rounded-3xl p-12 border border-white/10">
-              <p className="text-3xl sm:text-4xl font-black text-white mb-6">
-                歯車は止まらない。
-              </p>
-              <p className="text-xl text-gray-300 mb-8 leading-relaxed">
-                Clockwork Harmony、響かせていこう。
-              </p>
-
-              {/* アイコン */}
-              <div className="text-6xl mb-8 drop-shadow-[0_0_40px_rgba(168,85,247,0.5)]">⚙️✨</div>
-
-              {/* ファイナルコール */}
-              <p className="text-2xl sm:text-3xl font-black">
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-pink-300 to-cyan-300 drop-shadow-[0_0_30px_rgba(236,72,153,0.5)]">
-                  始める？
-                </span>
-              </p>
-            </div>
-          </div>
+          {session ? (
+            <Link
+              href="/dashboard"
+              className="inline-flex px-10 py-5 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full font-bold text-lg hover:opacity-90 transition-opacity"
+            >
+              ダッシュボードへ
+            </Link>
+          ) : (
+            <button
+              onClick={() => signIn("discord")}
+              className="inline-flex items-center gap-3 px-10 py-5 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full font-bold text-lg hover:opacity-90 transition-opacity"
+            >
+              <DiscordIcon />
+              Discordでログイン
+            </button>
+          )}
         </div>
       </section>
 
       {/* フッター */}
-      <footer className="relative py-10 px-6">
-        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+      <footer className="relative py-8 px-6 border-t border-white/5">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400 font-bold">
-            RA☆JI☆TAN と君の 無限ループ
+            RA☆JI☆TAN
           </p>
           <p className="text-gray-600 text-sm">
-            © 2024 Rajitan. Clockwork Harmony 響け！
+            © 2024 Rajitan
           </p>
         </div>
       </footer>
+    </div>
+  );
+}
 
-      {/* グローバルスタイル */}
-      <style jsx>{`
-        @keyframes scroll {
-          0%, 100% { transform: translateY(0); opacity: 0.5; }
-          50% { transform: translateY(6px); opacity: 1; }
-        }
-        .animate-scroll {
-          animation: scroll 2s ease-in-out infinite;
-        }
-        @keyframes float {
-          0%, 100% { transform: translateY(0) rotate(-2deg); }
-          50% { transform: translateY(-15px) rotate(2deg); }
-        }
-        .animate-float {
-          animation: float 4s ease-in-out infinite;
-        }
-        .animate-float-delay {
-          animation: float 4s ease-in-out 1s infinite;
-        }
-        @keyframes twinkle {
-          0%, 100% { opacity: 1; transform: scale(1); }
-          50% { opacity: 0.4; transform: scale(0.8); }
-        }
-        .animate-twinkle {
-          animation: twinkle 2s ease-in-out infinite;
-        }
-        .animate-twinkle-delay {
-          animation: twinkle 2s ease-in-out 0.5s infinite;
-        }
-        @keyframes pulse-slow {
-          0%, 100% { opacity: 0.5; }
-          50% { opacity: 0.8; }
-        }
-        .animate-pulse-slow {
-          animation: pulse-slow 4s ease-in-out infinite;
-        }
-      `}</style>
+// Discord風メッセージモック
+function DiscordMock({ content }: { content: string }) {
+  return (
+    <div className="bg-[#313338] rounded-lg p-4 max-w-md shadow-xl border border-white/5">
+      {/* ヘッダー */}
+      <div className="flex items-center gap-3 mb-3">
+        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-lg">
+          ⚙️
+        </div>
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="font-bold text-white">らじたん</span>
+            <span className="text-[10px] px-1.5 py-0.5 bg-[#5865f2] rounded text-white font-medium">BOT</span>
+          </div>
+          <span className="text-xs text-gray-400">今日 23:45</span>
+        </div>
+      </div>
+
+      {/* メッセージ内容 */}
+      <div className="text-[#dbdee1] text-sm leading-relaxed whitespace-pre-line">
+        {content.split('\n').map((line, i) => {
+          // 太字処理
+          const parts = line.split(/\*\*(.*?)\*\*/g);
+          return (
+            <div key={i}>
+              {parts.map((part, j) =>
+                j % 2 === 1 ? <strong key={j} className="text-white">{part}</strong> : part
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// 機能セクションの行コンポーネント
+function FeatureRow({
+  reverse,
+  title,
+  description,
+  mockMessage,
+}: {
+  reverse: boolean;
+  title: string;
+  description: string;
+  mockMessage: { content: string };
+}) {
+  return (
+    <div className={`flex flex-col ${reverse ? 'lg:flex-row-reverse' : 'lg:flex-row'} items-center gap-12`}>
+      {/* モック */}
+      <div className="flex-1 flex justify-center">
+        <DiscordMock content={mockMessage.content} />
+      </div>
+
+      {/* テキスト */}
+      <div className="flex-1 text-center lg:text-left">
+        <h3 className="text-2xl sm:text-3xl font-bold text-white mb-4">{title}</h3>
+        <p className="text-xl text-gray-400">{description}</p>
+      </div>
     </div>
   );
 }
@@ -418,12 +338,12 @@ function Gear({ size, speed, reverse = false }: { size: number; speed: number; r
 }
 
 function SparkParticles() {
-  const particles = Array.from({ length: 25 }, (_, i) => ({
+  const particles = Array.from({ length: 20 }, (_, i) => ({
     id: i,
     left: Math.random() * 100,
     delay: Math.random() * 10,
     duration: 8 + Math.random() * 8,
-    size: 2 + Math.random() * 4,
+    size: 2 + Math.random() * 3,
   }));
 
   return (
@@ -438,7 +358,7 @@ function SparkParticles() {
             height: p.size,
             background: `radial-gradient(circle, rgba(250,204,21,1) 0%, rgba(250,204,21,0) 70%)`,
             animation: `float-up ${p.duration}s ease-in-out ${p.delay}s infinite`,
-            boxShadow: '0 0 15px rgba(250, 204, 21, 0.8), 0 0 30px rgba(250, 204, 21, 0.4)',
+            boxShadow: '0 0 10px rgba(250, 204, 21, 0.6)',
           }}
         />
       ))}
@@ -453,7 +373,7 @@ function SparkParticles() {
             transform: translateY(95vh) scale(1);
           }
           95% {
-            opacity: 0.8;
+            opacity: 0.6;
           }
           100% {
             transform: translateY(-10vh) scale(0.3);
@@ -462,40 +382,6 @@ function SparkParticles() {
         }
       `}</style>
     </>
-  );
-}
-
-function FeatureCard({
-  icon,
-  title,
-  description,
-  color,
-}: {
-  icon: string;
-  title: string;
-  description: string;
-  color: string;
-}) {
-  const colorMap: Record<string, string> = {
-    blue: 'from-blue-500 to-cyan-500',
-    pink: 'from-pink-500 to-rose-500',
-    purple: 'from-purple-500 to-violet-500',
-    amber: 'from-amber-500 to-orange-500',
-    green: 'from-green-500 to-emerald-500',
-    rose: 'from-rose-500 to-pink-500',
-  };
-
-  return (
-    <div className="group relative h-full">
-      {/* ホバー時のグロー */}
-      <div className={`absolute -inset-0.5 bg-gradient-to-r ${colorMap[color]} rounded-2xl opacity-0 group-hover:opacity-40 blur transition-all duration-500`} />
-
-      <div className="relative h-full bg-black/40 backdrop-blur-xl rounded-2xl p-8 border border-white/10 group-hover:border-white/20 transition-all">
-        <div className="text-5xl mb-4 group-hover:scale-110 transition-transform duration-300">{icon}</div>
-        <h3 className="text-xl font-bold text-white mb-3">{title}</h3>
-        <p className="text-gray-400 leading-relaxed">{description}</p>
-      </div>
-    </div>
   );
 }
 
