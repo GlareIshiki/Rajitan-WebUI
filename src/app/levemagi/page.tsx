@@ -81,44 +81,49 @@ export default function LeveMagiPage() {
 
   return (
     <div className="min-h-screen bg-app text-primary">
-      {/* ヘッダー */}
-      <div className="sticky top-0 z-40 bg-app/80 backdrop-blur-xl border-b border-panel">
-        <div className="max-w-4xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <span className="text-3xl">🌰</span>
-              <div>
-                <h1 className="text-xl font-bold text-accent">LeveMagi</h1>
-                <p className="text-xs text-muted">{getAchievementTitle(level)}</p>
-              </div>
-            </div>
+      {/* サイドバー（デスクトップ） + 下部バー（モバイル） */}
+      <TabNavigation
+        tabs={TABS}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        level={level}
+        totalXP={totalXP}
+        xpProgress={xpProgress}
+        gachaTickets={state.userData.gachaTickets}
+      />
 
-            {/* レベル表示（ミニ） — ProgressRing付き */}
-            <div className="flex items-center gap-3 bg-card rounded-xl px-4 py-2">
-              <ProgressRing percentage={level >= 100 ? 100 : xpProgress.progress} size={40} strokeWidth={3}>
-                <span className="text-xs font-bold text-accent">{level}</span>
-              </ProgressRing>
-              <div className="w-px h-8 bg-panel" />
-              <div className="text-center">
-                <div className="text-xs text-muted">XP</div>
-                <div className="text-lg font-bold">{formatXP(totalXP)}</div>
-              </div>
-              <div className="w-px h-8 bg-panel" />
-              <div className="text-center">
-                <div className="text-xs text-muted">🎫</div>
-                <div className="text-lg font-bold">{state.userData.gachaTickets}</div>
-              </div>
+      {/* モバイルヘッダー（lg以上では非表示） */}
+      <div className="lg:hidden sticky top-16 z-30 bg-app/80 backdrop-blur-xl border-b border-panel">
+        <div className="px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <span className="text-2xl">🌰</span>
+            <div>
+              <h1 className="text-lg font-bold text-accent">LeveMagi</h1>
+              <p className="text-[10px] text-muted">{getAchievementTitle(level)}</p>
             </div>
           </div>
-
-          {/* タブ */}
-          <TabNavigation tabs={TABS} activeTab={activeTab} onTabChange={setActiveTab} />
+          <div className="flex items-center gap-3 bg-card rounded-xl px-3 py-1.5">
+            <ProgressRing percentage={level >= 100 ? 100 : xpProgress.progress} size={32} strokeWidth={2}>
+              <span className="text-[10px] font-bold text-accent">{level}</span>
+            </ProgressRing>
+            <div className="w-px h-6 bg-panel" />
+            <div className="text-center">
+              <div className="text-[10px] text-muted">XP</div>
+              <div className="text-sm font-bold">{formatXP(totalXP)}</div>
+            </div>
+            <div className="w-px h-6 bg-panel" />
+            <div className="text-center">
+              <div className="text-[10px] text-muted">🎫</div>
+              <div className="text-sm font-bold">{state.userData.gachaTickets}</div>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* コンテンツ — タブ切替アニメーション */}
-      <div className="max-w-4xl mx-auto px-4 py-6">
-        <div key={activeTab} className="animate-slide-in">
+      {/* コンテンツ — サイドバーオフセット + 下部バーパディング */}
+      <div className="lg:ml-56 pb-16 lg:pb-0">
+        <div className="max-w-4xl mx-auto px-4 py-6">
+          <div key={activeTab} className="animate-slide-in">
           {activeTab === "portal" && (
             <div className="space-y-6">
               <EisenhowerMatrix nuts={state.nuts} />
@@ -211,6 +216,7 @@ export default function LeveMagiPage() {
               onGachaResult={setGachaResult}
             />
           )}
+          </div>
         </div>
       </div>
 
