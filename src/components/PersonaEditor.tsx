@@ -29,6 +29,7 @@ export default function PersonaEditor({
   const [traits, setTraits] = useState<PersonalityTraits>(
     persona?.personalityTraits ?? { ...DEFAULT_TRAITS }
   );
+  const [isPublic, setIsPublic] = useState(persona?.isPublic ?? false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -64,6 +65,7 @@ export default function PersonaEditor({
         description: description.trim(),
         systemPrompt: systemPrompt,
         personalityTraits: traits,
+        isPublic,
       };
       const success = await onSave(data);
       if (!success) {
@@ -189,6 +191,31 @@ export default function PersonaEditor({
             <span className="text-xs text-muted">
               {systemPrompt.length}/4000
             </span>
+          </div>
+
+          {/* Public Toggle */}
+          <div className="mb-6 flex items-center justify-between bg-panel rounded-xl p-4">
+            <div>
+              <p className="text-sm font-medium text-primary">公開する</p>
+              <p className="text-xs text-muted">
+                他のサーバーからも利用可能になります
+              </p>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={isPublic}
+              onClick={() => setIsPublic(!isPublic)}
+              className={`relative inline-flex h-6 w-11 shrink-0 rounded-full transition-colors ${
+                isPublic ? "bg-accent" : "bg-card border border-panel"
+              }`}
+            >
+              <span
+                className={`inline-block h-5 w-5 rounded-full bg-white shadow transform transition-transform ${
+                  isPublic ? "translate-x-5" : "translate-x-0.5"
+                } mt-0.5`}
+              />
+            </button>
           </div>
 
           {/* Actions */}

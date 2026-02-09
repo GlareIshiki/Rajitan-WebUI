@@ -147,14 +147,22 @@ export default function PersonasPage() {
     [sortKey]
   );
 
-  // Separate presets and custom, then sort
+  // Separate presets, own custom, and shared public
   const presetPersonas = useMemo(
     () => sortPersonas(personas.filter((p) => p.isPreset)),
     [personas, sortPersonas]
   );
+  const ownPersonas = useMemo(
+    () => sortPersonas(personas.filter((p) => !p.isPreset && p.guildId === selectedGuildId)),
+    [personas, sortPersonas, selectedGuildId]
+  );
+  const sharedPersonas = useMemo(
+    () => sortPersonas(personas.filter((p) => !p.isPreset && p.guildId !== selectedGuildId)),
+    [personas, sortPersonas, selectedGuildId]
+  );
   const customPersonas = useMemo(
-    () => sortPersonas(personas.filter((p) => !p.isPreset)),
-    [personas, sortPersonas]
+    () => [...ownPersonas, ...sharedPersonas],
+    [ownPersonas, sharedPersonas]
   );
 
   if (status === "loading") {
@@ -254,9 +262,9 @@ export default function PersonasPage() {
                 <div className="card p-6">
                   <div className="flex items-center justify-between mb-4">
                     <h2 className="text-xl font-bold">
-                      カスタム ({customPersonas.length}/50)
+                      カスタム ({ownPersonas.length}/50)
                     </h2>
-                    {customPersonas.length < 50 && (
+                    {ownPersonas.length < 50 && (
                       <button onClick={handleCreate} className="btn-primary text-sm">
                         + 新規作成
                       </button>
@@ -275,14 +283,17 @@ export default function PersonasPage() {
                     </div>
                   ) : (
                     <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-4">
-                      {customPersonas.map((persona) => (
+                      {customPersonas.map((persona) => {
+                        const owned = persona.guildId === selectedGuildId;
+                        return (
                         <div key={persona.id} className="relative">
                           <PersonaCard
                             persona={persona}
                             isActive={activePersonaId === persona.id}
+                            isOwned={owned}
                             onActivate={() => setActivePersona(persona.id)}
-                            onEdit={() => handleEdit(persona)}
-                            onDelete={() => setConfirmDelete(persona.id)}
+                            onEdit={owned ? () => handleEdit(persona) : undefined}
+                            onDelete={owned ? () => setConfirmDelete(persona.id) : undefined}
                           />
 
                           {/* Delete confirmation */}
@@ -308,7 +319,8 @@ export default function PersonasPage() {
                             </div>
                           )}
                         </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
                 </div>

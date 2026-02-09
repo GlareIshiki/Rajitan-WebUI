@@ -6,6 +6,7 @@ import { TRAIT_LABELS } from "@/types/persona";
 interface PersonaCardProps {
   persona: Persona;
   isActive: boolean;
+  isOwned?: boolean;
   onActivate: () => void;
   onEdit?: () => void;
   onDelete?: () => void;
@@ -14,6 +15,7 @@ interface PersonaCardProps {
 export default function PersonaCard({
   persona,
   isActive,
+  isOwned = true,
   onActivate,
   onEdit,
   onDelete,
@@ -38,6 +40,11 @@ export default function PersonaCard({
             {persona.isPreset && (
               <span className="shrink-0 px-2 py-0.5 rounded-full text-xs bg-accent/20 text-accent">
                 プリセット
+              </span>
+            )}
+            {persona.isPublic && !persona.isPreset && (
+              <span className="shrink-0 px-2 py-0.5 rounded-full text-xs bg-blue-500/20 text-blue-400">
+                公開
               </span>
             )}
             {isActive && (
@@ -86,7 +93,7 @@ export default function PersonaCard({
             アクティブにする
           </button>
         )}
-        {!persona.isPreset && onEdit && (
+        {!persona.isPreset && isOwned && onEdit && (
           <button
             onClick={onEdit}
             className="btn-secondary text-sm"
@@ -94,7 +101,7 @@ export default function PersonaCard({
             編集
           </button>
         )}
-        {!persona.isPreset && onDelete && (
+        {!persona.isPreset && isOwned && onDelete && (
           <button
             onClick={onDelete}
             className="text-sm px-3 py-1.5 rounded-lg text-danger hover:bg-danger/10 transition-colors"

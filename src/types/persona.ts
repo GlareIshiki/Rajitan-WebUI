@@ -15,6 +15,7 @@ export interface Persona {
   systemPrompt: string;
   personalityTraits: PersonalityTraits;
   isPreset: boolean;
+  isPublic: boolean;
   createdBy: string;
   createdAt: string;
   updatedAt: string;
@@ -26,6 +27,7 @@ export interface PersonaCreate {
   description?: string;
   systemPrompt?: string;
   personalityTraits?: Partial<PersonalityTraits>;
+  isPublic?: boolean;
 }
 
 export interface PersonaUpdate {
@@ -34,6 +36,7 @@ export interface PersonaUpdate {
   description?: string;
   systemPrompt?: string;
   personalityTraits?: Partial<PersonalityTraits>;
+  isPublic?: boolean;
 }
 
 export interface PersonaListResponse {
