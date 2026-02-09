@@ -2,12 +2,25 @@
 
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { api } from "@/lib/api";
 import { usePersonas } from "@/hooks/usePersonas";
 import PersonaCard from "@/components/PersonaCard";
 import PersonaEditor from "@/components/PersonaEditor";
 import type { Persona, PersonaCreate, PersonaUpdate } from "@/types/persona";
+import { TRAIT_LABELS } from "@/types/persona";
+import type { PersonalityTraits } from "@/types/persona";
+
+type SortKey = "createdAt" | "name" | keyof PersonalityTraits;
+
+const SORT_OPTIONS: { value: SortKey; label: string }[] = [
+  { value: "createdAt", label: "作成日時" },
+  { value: "name", label: "名前" },
+  ...Object.entries(TRAIT_LABELS).map(([key, label]) => ({
+    value: key as keyof PersonalityTraits,
+    label,
+  })),
+];
 
 interface Guild {
   id: string;
@@ -27,6 +40,9 @@ export default function PersonasPage() {
   const [showEditor, setShowEditor] = useState(false);
   const [editingPersona, setEditingPersona] = useState<Persona | undefined>();
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+
+  // Sort state
+  const [sortKey, setSortKey] = useState<SortKey>("createdAt");
 
   const token = (session as { accessToken?: string } | null)?.accessToken;
 
@@ -112,9 +128,34 @@ export default function PersonasPage() {
     [deletePersona]
   );
 
-  // Separate presets and custom
-  const presetPersonas = personas.filter((p) => p.isPreset);
-  const customPersonas = personas.filter((p) => !p.isPreset);
+  // Sort helper
+  const sortPersonas = useCallback(
+    (list: Persona[]) => {
+      return [...list].sort((a, b) => {
+        if (sortKey === "createdAt") {
+          return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+        }
+        if (sortKey === "name") {
+          return (a.displayName || a.name).localeCompare(b.displayName || b.name, "ja");
+        }
+        // Trait sort: descending (higher value first)
+        const traitA = a.personalityTraits?.[sortKey] ?? 0;
+        const traitB = b.personalityTraits?.[sortKey] ?? 0;
+        return traitB - traitA;
+      });
+    },
+    [sortKey]
+  );
+
+  // Separate presets and custom, then sort
+  const presetPersonas = useMemo(
+    () => sortPersonas(personas.filter((p) => p.isPreset)),
+    [personas, sortPersonas]
+  );
+  const customPersonas = useMemo(
+    () => sortPersonas(personas.filter((p) => !p.isPreset)),
+    [personas, sortPersonas]
+  );
 
   if (status === "loading") {
     return (
@@ -174,6 +215,26 @@ export default function PersonasPage() {
               </div>
             ) : (
               <>
+                {/* Sort */}
+                <div className="flex items-center gap-3">
+                  <span className="text-sm text-muted">並び替え:</span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {SORT_OPTIONS.map((opt) => (
+                      <button
+                        key={opt.value}
+                        onClick={() => setSortKey(opt.value)}
+                        className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                          sortKey === opt.value
+                            ? "bg-accent text-white"
+                            : "bg-card text-muted hover:text-primary hover:bg-panel"
+                        }`}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
                 {/* Presets */}
                 <div className="card p-6">
                   <h2 className="text-xl font-bold mb-4">プリセット</h2>
