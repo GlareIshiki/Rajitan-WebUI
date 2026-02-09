@@ -15,6 +15,7 @@ export default function Navbar() {
     { href: "/dashboard", label: "ダッシュボード", icon: "📊", auth: true },
     { href: "/levemagi", label: "LeveMagi", icon: "🌰" },
     { href: "/calendar", label: "カレンダー", icon: "📅", auth: true },
+    { href: "/personas", label: "ペルソナ", icon: "🎭", auth: true },
     { href: "/settings", label: "設定", icon: "⚙️", auth: true },
     { href: "/stats", label: "統計", icon: "📈", auth: true },
   ];

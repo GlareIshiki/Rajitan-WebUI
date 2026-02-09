@@ -331,26 +331,19 @@ export default function SettingsPage() {
                   </div>
                 </div>
 
-                {/* キャラクター設定 */}
+                {/* キャラクター設定 → ペルソナページへ誘導 */}
                 <div className="card p-6">
                   <h2 className="text-xl font-bold mb-4">キャラクター</h2>
-                  <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                    {CHARACTER_TYPES.map((char) => (
-                      <button
-                        key={char.id}
-                        onClick={() => setSelectedGuild({ ...selectedGuild, character: char.id })}
-                        className={`p-4 rounded-xl text-left transition-all border ${
-                          selectedGuild.character === char.id
-                            ? "bg-accent text-white border-accent"
-                            : "bg-card text-primary border-panel hover:border-accent"
-                        }`}
-                      >
-                        <div className="font-medium">{char.name}</div>
-                        <div className={`text-sm mt-1 ${selectedGuild.character === char.id ? "text-white/80" : "text-muted"}`}>
-                          {char.description}
-                        </div>
-                      </button>
-                    ))}
+                  <div className="p-4 rounded-xl bg-panel">
+                    <p className="text-primary mb-3">
+                      ペルソナ管理が専用ページに移動しました。プリセット8種に加え、カスタムペルソナを最大50個作成できます。
+                    </p>
+                    <a
+                      href="/personas"
+                      className="btn-primary inline-block text-sm"
+                    >
+                      🎭 ペルソナ管理ページへ
+                    </a>
                   </div>
                 </div>
 
