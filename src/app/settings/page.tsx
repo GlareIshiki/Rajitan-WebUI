@@ -199,6 +199,9 @@ export default function SettingsPage() {
       <div className="max-w-7xl mx-auto">
         <h1 className="text-3xl font-bold mb-8 text-accent">設定</h1>
 
+        {/* Google Calendar 連携 */}
+        <GoogleCalendarSection token={token} />
+
         {/* 外観設定 */}
         <div className="card p-6 mb-8">
           <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
@@ -405,6 +408,105 @@ export default function SettingsPage() {
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_RAJITAN_API_URL || "http://localhost:8000";
+
+function GoogleCalendarSection({ token }: { token?: string }) {
+  const [status, setStatus] = useState<{ connected: boolean; email?: string } | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const checkStatus = useCallback(async () => {
+    if (!token) return;
+    try {
+      const data = await api.get<{ connected: boolean; email?: string }>(
+        "/api/google/status",
+        token,
+      );
+      setStatus(data);
+    } catch {
+      setStatus({ connected: false });
+    } finally {
+      setLoading(false);
+    }
+  }, [token]);
+
+  useEffect(() => {
+    checkStatus();
+  }, [checkStatus]);
+
+  // Listen for popup postMessage
+  useEffect(() => {
+    const handler = (event: MessageEvent) => {
+      if (event.data === "google-connected") {
+        checkStatus();
+      }
+    };
+    window.addEventListener("message", handler);
+    return () => window.removeEventListener("message", handler);
+  }, [checkStatus]);
+
+  const handleConnect = () => {
+    if (!token) return;
+    const url = `${API_BASE_URL}/api/google/auth?token=${token}`;
+    const popup = window.open(url, "google-auth", "width=500,height=700");
+    if (!popup) {
+      alert("ポップアップがブロックされました。ポップアップを許可してください。");
+    }
+  };
+
+  const handleDisconnect = async () => {
+    if (!token) return;
+    try {
+      await api.delete("/api/google/disconnect", token);
+      setStatus({ connected: false });
+    } catch (err) {
+      console.error("Failed to disconnect Google Calendar:", err);
+    }
+  };
+
+  return (
+    <div className="card p-6 mb-8">
+      <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
+        <span>📅</span> Google Calendar 連携
+      </h2>
+
+      {loading ? (
+        <div className="text-muted text-sm">確認中...</div>
+      ) : status?.connected ? (
+        <div className="flex items-center justify-between p-4 rounded-xl bg-panel">
+          <div>
+            <div className="font-medium text-primary flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-green-500" />
+              接続済み
+            </div>
+            {status.email && (
+              <div className="text-sm text-muted mt-0.5">{status.email}</div>
+            )}
+          </div>
+          <button
+            onClick={handleDisconnect}
+            className="text-sm text-red-400 hover:text-red-300 transition-colors"
+          >
+            切断
+          </button>
+        </div>
+      ) : (
+        <div className="flex items-center justify-between p-4 rounded-xl bg-panel">
+          <div>
+            <div className="font-medium text-primary">未接続</div>
+            <div className="text-sm text-muted mt-0.5">
+              Google Calendar の予定をカレンダーに表示できます
+            </div>
+          </div>
+          <button onClick={handleConnect} className="btn-primary text-sm">
+            接続する
+          </button>
+        </div>
+      )}
     </div>
   );
 }

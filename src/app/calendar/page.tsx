@@ -40,6 +40,7 @@ const EVENT_TYPE_CONFIG: Record<string, { label: string; color: string; dotColor
   deadline: { label: "締切", color: "#ef4444", dotColor: "bg-red-500" },
   schedule: { label: "スケジュール", color: "#3b82f6", dotColor: "bg-blue-500" },
   manual: { label: "イベント", color: "#a855f7", dotColor: "bg-purple-500" },
+  google: { label: "Google", color: "#16a34a", dotColor: "bg-green-600" },
 };
 
 const DEFAULT_FORM: EventFormData = {
