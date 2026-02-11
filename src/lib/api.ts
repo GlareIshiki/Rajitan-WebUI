@@ -105,6 +105,38 @@ export async function fetchAPI<T = unknown>(
   return deepSnakeToCamel(json) as T;
 }
 
+/**
+ * Upload a file via multipart/form-data.
+ * Response JSON is converted from snake_case to camelCase.
+ */
+export async function uploadFileAPI<T = unknown>(
+  path: string,
+  file: File,
+  token?: string,
+): Promise<T> {
+  const headers: Record<string, string> = {};
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+
+  const form = new FormData();
+  form.append("file", file);
+
+  const res = await fetch(`${API_BASE_URL}${path}`, {
+    method: "POST",
+    headers,
+    body: form,
+  });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => "Unknown error");
+    throw new ApiError(res.status, text);
+  }
+
+  const json = await res.json();
+  return deepSnakeToCamel(json) as T;
+}
+
 /** Convenience methods */
 export const api = {
   get: <T>(path: string, token?: string) =>
@@ -118,4 +150,7 @@ export const api = {
 
   delete: <T>(path: string, token?: string) =>
     fetchAPI<T>(path, { method: "DELETE", token }),
+
+  uploadFile: <T>(path: string, file: File, token?: string) =>
+    uploadFileAPI<T>(path, file, token),
 };

@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef } from "react";
 import type { Persona, PersonalityTraits } from "@/types/persona";
 import { TRAIT_LABELS } from "@/types/persona";
 
@@ -10,6 +11,7 @@ interface PersonaCardProps {
   onActivate: () => void;
   onEdit?: () => void;
   onDelete?: () => void;
+  onAvatarUpload?: (file: File) => void;
 }
 
 export default function PersonaCard({
@@ -19,8 +21,27 @@ export default function PersonaCard({
   onActivate,
   onEdit,
   onDelete,
+  onAvatarUpload,
 }: PersonaCardProps) {
   const traits = persona.personalityTraits;
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const handleAvatarClick = () => {
+    if (onAvatarUpload) {
+      fileRef.current?.click();
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && onAvatarUpload) {
+      onAvatarUpload(file);
+    }
+    // Reset so the same file can be re-selected
+    if (fileRef.current) fileRef.current.value = "";
+  };
+
+  const initial = (persona.displayName || persona.name).charAt(0).toUpperCase();
 
   return (
     <div
@@ -30,8 +51,46 @@ export default function PersonaCard({
           : "border-panel bg-card hover:border-accent/50"
       }`}
     >
-      {/* Header */}
-      <div className="flex items-start justify-between mb-3">
+      {/* Header with Avatar */}
+      <div className="flex items-start gap-3 mb-3">
+        {/* Avatar */}
+        <button
+          type="button"
+          onClick={handleAvatarClick}
+          className={`shrink-0 w-12 h-12 rounded-full overflow-hidden border-2 border-panel bg-panel flex items-center justify-center ${
+            onAvatarUpload ? "cursor-pointer hover:border-accent group" : "cursor-default"
+          }`}
+          title={onAvatarUpload ? "アバターを変更" : undefined}
+        >
+          {persona.avatarUrl ? (
+            <img
+              src={persona.avatarUrl}
+              alt={persona.displayName || persona.name}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <span className="text-lg font-bold text-muted group-hover:text-accent transition-colors">
+              {initial}
+            </span>
+          )}
+          {onAvatarUpload && (
+            <div className="absolute w-12 h-12 rounded-full bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+              <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+            </div>
+          )}
+        </button>
+        <input
+          ref={fileRef}
+          type="file"
+          accept="image/png,image/jpeg,image/webp,image/gif"
+          className="hidden"
+          onChange={handleFileChange}
+        />
+
+        {/* Name + badges */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <h3 className="font-bold text-primary truncate">

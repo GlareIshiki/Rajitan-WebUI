@@ -54,6 +54,7 @@ export default function PersonasPage() {
     updatePersona,
     deletePersona,
     setActivePersona,
+    uploadAvatar,
   } = usePersonas(selectedGuildId, token);
 
   useEffect(() => {
@@ -253,6 +254,7 @@ export default function PersonasPage() {
                         persona={persona}
                         isActive={activePersonaId === persona.id}
                         onActivate={() => setActivePersona(persona.id)}
+                        onAvatarUpload={(file) => uploadAvatar(persona.id, file)}
                       />
                     ))}
                   </div>
@@ -294,6 +296,7 @@ export default function PersonasPage() {
                             onActivate={() => setActivePersona(persona.id)}
                             onEdit={owned ? () => handleEdit(persona) : undefined}
                             onDelete={owned ? () => setConfirmDelete(persona.id) : undefined}
+                            onAvatarUpload={owned ? (file) => uploadAvatar(persona.id, file) : undefined}
                           />
 
                           {/* Delete confirmation */}
@@ -339,6 +342,7 @@ export default function PersonasPage() {
             setShowEditor(false);
             setEditingPersona(undefined);
           }}
+          onAvatarUpload={editingPersona ? (file) => uploadAvatar(editingPersona.id, file) : undefined}
         />
       )}
     </div>

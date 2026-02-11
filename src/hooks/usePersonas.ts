@@ -102,6 +102,49 @@ export function usePersonas(guildId: string | null, token: string | undefined) {
     [guildId, token, activePersonaId]
   );
 
+  const uploadAvatar = useCallback(
+    async (personaId: string, file: File): Promise<string | null> => {
+      if (!token) return null;
+      try {
+        const result = await api.uploadFile<{ avatarUrl: string }>(
+          `/api/bot/personas/${personaId}/avatar`,
+          file,
+          token
+        );
+        // Update local state with new avatar URL
+        setPersonas((prev) =>
+          prev.map((p) =>
+            p.id === personaId ? { ...p, avatarUrl: result.avatarUrl } : p
+          )
+        );
+        return result.avatarUrl;
+      } catch (e) {
+        console.error("Failed to upload avatar:", e);
+        return null;
+      }
+    },
+    [token]
+  );
+
+  const deleteAvatar = useCallback(
+    async (personaId: string): Promise<boolean> => {
+      if (!token) return false;
+      try {
+        await api.delete(`/api/bot/personas/${personaId}/avatar`, token);
+        setPersonas((prev) =>
+          prev.map((p) =>
+            p.id === personaId ? { ...p, avatarUrl: "" } : p
+          )
+        );
+        return true;
+      } catch (e) {
+        console.error("Failed to delete avatar:", e);
+        return false;
+      }
+    },
+    [token]
+  );
+
   const setActivePersona = useCallback(
     async (personaId: string): Promise<boolean> => {
       if (!guildId || !token) return false;
@@ -129,6 +172,8 @@ export function usePersonas(guildId: string | null, token: string | undefined) {
     updatePersona,
     deletePersona,
     setActivePersona,
+    uploadAvatar,
+    deleteAvatar,
     refresh: fetchPersonas,
   };
 }

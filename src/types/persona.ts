@@ -16,6 +16,7 @@ export interface Persona {
   personalityTraits: PersonalityTraits;
   isPreset: boolean;
   isPublic: boolean;
+  avatarUrl: string;
   createdBy: string;
   createdAt: string;
   updatedAt: string;

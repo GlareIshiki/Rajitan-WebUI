@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import type {
   Persona,
   PersonaCreate,
@@ -13,12 +13,14 @@ interface PersonaEditorProps {
   persona?: Persona;
   onSave: (data: PersonaCreate | PersonaUpdate) => Promise<boolean>;
   onCancel: () => void;
+  onAvatarUpload?: (file: File) => void;
 }
 
 export default function PersonaEditor({
   persona,
   onSave,
   onCancel,
+  onAvatarUpload,
 }: PersonaEditorProps) {
   const isEditing = !!persona;
 
@@ -32,6 +34,8 @@ export default function PersonaEditor({
   const [isPublic, setIsPublic] = useState(persona?.isPublic ?? false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   const handleTraitChange = useCallback(
     (key: keyof PersonalityTraits, value: number) => {
@@ -39,6 +43,26 @@ export default function PersonaEditor({
     },
     []
   );
+
+  const handleAvatarSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Show local preview
+    const reader = new FileReader();
+    reader.onload = () => setAvatarPreview(reader.result as string);
+    reader.readAsDataURL(file);
+
+    // Upload immediately if handler provided and persona exists
+    if (onAvatarUpload && isEditing) {
+      onAvatarUpload(file);
+    }
+
+    if (fileRef.current) fileRef.current.value = "";
+  };
+
+  const currentAvatar = avatarPreview || persona?.avatarUrl || null;
+  const initial = (displayName || name || "?").charAt(0).toUpperCase();
 
   const handleSubmit = async () => {
     setError("");
@@ -91,6 +115,47 @@ export default function PersonaEditor({
               {error}
             </div>
           )}
+
+          {/* Avatar */}
+          <div className="mb-6 flex items-center gap-4">
+            <button
+              type="button"
+              onClick={() => fileRef.current?.click()}
+              className="shrink-0 w-20 h-20 rounded-full overflow-hidden border-2 border-panel bg-panel hover:border-accent transition-colors cursor-pointer group flex items-center justify-center relative"
+              title="アバター画像を選択"
+            >
+              {currentAvatar ? (
+                <img
+                  src={currentAvatar}
+                  alt="Avatar preview"
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <span className="text-2xl font-bold text-muted group-hover:text-accent transition-colors">
+                  {initial}
+                </span>
+              )}
+              <div className="absolute inset-0 rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+              </div>
+            </button>
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/png,image/jpeg,image/webp,image/gif"
+              className="hidden"
+              onChange={handleAvatarSelect}
+            />
+            <div>
+              <p className="text-sm font-medium text-primary">アバター画像</p>
+              <p className="text-xs text-muted">
+                PNG/JPEG/WebP/GIF, 2MB以下。256x256にリサイズされます
+              </p>
+            </div>
+          </div>
 
           {/* Name */}
           <div className="mb-4">
