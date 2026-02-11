@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import type { Persona, PersonalityTraits } from "@/types/persona";
 import { TRAIT_LABELS } from "@/types/persona";
-import AvatarCropModal from "@/components/AvatarCropModal";
+import AvatarCropModal from "./AvatarCropModal";
 
 interface PersonaCardProps {
   persona: Persona;

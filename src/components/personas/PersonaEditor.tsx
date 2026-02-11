@@ -8,7 +8,7 @@ import type {
   PersonalityTraits,
 } from "@/types/persona";
 import { DEFAULT_TRAITS, TRAIT_LABELS } from "@/types/persona";
-import AvatarCropModal from "@/components/AvatarCropModal";
+import AvatarCropModal from "./AvatarCropModal";
 
 interface PersonaEditorProps {
   persona?: Persona;
