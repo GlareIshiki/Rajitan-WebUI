@@ -13,6 +13,7 @@
     "next-auth": "^4.24.10",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "react-easy-crop": "^5.1.0",
     "recharts": "^2.15.0"
   },
   "devDependencies": {
